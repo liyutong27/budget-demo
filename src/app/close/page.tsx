@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { formatUSDT } from "@/lib/format";
-import { MONTH_LABELS, DEPARTMENTS, DEPARTMENT_MAP } from "@/lib/constants";
+import { MONTHS, MONTH_LABELS, DEPARTMENTS, DEPARTMENT_MAP } from "@/lib/constants";
 import { Month, CloseMonth, Transaction } from "@/lib/types";
 import closeData from "@/data/close-status.json";
 import transactionsData from "@/data/transactions.json";
@@ -64,7 +64,7 @@ export default function ClosePage() {
             onChange={(e) => setSelectedMonth(e.target.value as Month)}
             className="appearance-none bg-[#0f0f22] border border-[#1e1e3a] text-[#e8e8ff] rounded-lg px-4 py-2 pr-8 text-sm focus:outline-none focus:ring-1 focus:ring-[#9997FF] cursor-pointer"
           >
-            {(["dec-2025", "jan-2026", "feb-2026"] as Month[]).map((m) => {
+            {MONTHS.slice(-3).map((m) => {
               const status = getMonthStatus(m);
               const prefix = status === "closed" ? "\u2713 " : status === "in_progress" ? "\u25CB " : "  ";
               return (

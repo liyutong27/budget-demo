@@ -123,3 +123,25 @@ export interface GEBudgetRow {
   hcActual: number;
   totalActual: number;
 }
+
+export interface DeptGEChange {
+  departmentId: string;
+  departmentName: string;
+  color: string;
+  prevGE: number;
+  currentGE: number;
+  change: number;
+  changePct: number;
+}
+
+export interface CategoryChange {
+  category: string;
+  current: number;
+  prev: number;
+  change: number;
+}
+
+export interface Insight {
+  type: "warning" | "info" | "success" | "optimization";
+  text: string;
+}

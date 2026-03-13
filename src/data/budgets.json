@@ -1,262 +1,62 @@
 {
   "design": {
-    "may-2025": {
-      "allocated": 16949.38,
-      "humanCapital": 11864.56,
-      "generalExpense": 5084.81
-    },
-    "jun-2025": {
-      "allocated": 16949.38,
-      "humanCapital": 11864.56,
-      "generalExpense": 5084.81
-    },
-    "jul-2025": {
-      "allocated": 16949.38,
-      "humanCapital": 11864.56,
-      "generalExpense": 5084.81
-    },
-    "aug-2025": {
-      "allocated": 16949.38,
-      "humanCapital": 11864.56,
-      "generalExpense": 5084.81
-    },
-    "sep-2025": {
-      "allocated": 16949.38,
-      "humanCapital": 11864.56,
-      "generalExpense": 5084.81
-    },
-    "oct-2025": {
-      "allocated": 43246.27,
-      "humanCapital": 30272.39,
-      "generalExpense": 12973.88
-    },
-    "nov-2025": {
-      "allocated": 23493.32,
-      "humanCapital": 16445.32,
-      "generalExpense": 7047.99
-    },
-    "dec-2025": {
-      "allocated": 21947.2,
-      "humanCapital": 15363.04,
-      "generalExpense": 6584.16
-    },
-    "jan-2026": {
-      "allocated": 16949.38,
-      "humanCapital": 11864.56,
-      "generalExpense": 5084.81
-    },
-    "feb-2026": {
-      "allocated": 16949.38,
-      "humanCapital": 11864.56,
-      "generalExpense": 5084.81
-    }
+    "may-2025": { "allocated": 15000, "humanCapital": 13500, "generalExpense": 1500 },
+    "jun-2025": { "allocated": 15000, "humanCapital": 13500, "generalExpense": 1500 },
+    "jul-2025": { "allocated": 15000, "humanCapital": 13500, "generalExpense": 1500 },
+    "aug-2025": { "allocated": 15000, "humanCapital": 13500, "generalExpense": 1500 },
+    "sep-2025": { "allocated": 15000, "humanCapital": 13500, "generalExpense": 1500 },
+    "oct-2025": { "allocated": 15000, "humanCapital": 13500, "generalExpense": 1500 },
+    "nov-2025": { "allocated": 15000, "humanCapital": 13500, "generalExpense": 1500 },
+    "dec-2025": { "allocated": 15000, "humanCapital": 13500, "generalExpense": 1500 },
+    "jan-2026": { "allocated": 15000, "humanCapital": 13500, "generalExpense": 1500 },
+    "feb-2026": { "allocated": 15000, "humanCapital": 13500, "generalExpense": 1500 }
   },
   "gtm": {
-    "may-2025": {
-      "allocated": 29222.02,
-      "humanCapital": 20455.42,
-      "generalExpense": 8766.61
-    },
-    "jun-2025": {
-      "allocated": 29222.02,
-      "humanCapital": 20455.42,
-      "generalExpense": 8766.61
-    },
-    "jul-2025": {
-      "allocated": 29222.02,
-      "humanCapital": 20455.42,
-      "generalExpense": 8766.61
-    },
-    "aug-2025": {
-      "allocated": 32879.63,
-      "humanCapital": 23015.74,
-      "generalExpense": 9863.89
-    },
-    "sep-2025": {
-      "allocated": 29222.02,
-      "humanCapital": 20455.42,
-      "generalExpense": 8766.61
-    },
-    "oct-2025": {
-      "allocated": 67098.68,
-      "humanCapital": 46969.07,
-      "generalExpense": 20129.61
-    },
-    "nov-2025": {
-      "allocated": 36592.62,
-      "humanCapital": 25614.84,
-      "generalExpense": 10977.79
-    },
-    "dec-2025": {
-      "allocated": 34301.52,
-      "humanCapital": 24011.07,
-      "generalExpense": 10290.46
-    },
-    "jan-2026": {
-      "allocated": 29488.67,
-      "humanCapital": 20642.07,
-      "generalExpense": 8846.6
-    },
-    "feb-2026": {
-      "allocated": 26000,
-      "humanCapital": 18200,
-      "generalExpense": 7800
-    }
+    "may-2025": { "allocated": 32000, "humanCapital": 26500, "generalExpense": 5500 },
+    "jun-2025": { "allocated": 32000, "humanCapital": 26500, "generalExpense": 5500 },
+    "jul-2025": { "allocated": 32000, "humanCapital": 26500, "generalExpense": 5500 },
+    "aug-2025": { "allocated": 32000, "humanCapital": 26500, "generalExpense": 5500 },
+    "sep-2025": { "allocated": 32000, "humanCapital": 26500, "generalExpense": 5500 },
+    "oct-2025": { "allocated": 32000, "humanCapital": 26500, "generalExpense": 5500 },
+    "nov-2025": { "allocated": 32000, "humanCapital": 26500, "generalExpense": 5500 },
+    "dec-2025": { "allocated": 32000, "humanCapital": 26500, "generalExpense": 5500 },
+    "jan-2026": { "allocated": 32000, "humanCapital": 26500, "generalExpense": 5500 },
+    "feb-2026": { "allocated": 32000, "humanCapital": 26500, "generalExpense": 5500 }
   },
   "operations": {
-    "may-2025": {
-      "allocated": 63467.64,
-      "humanCapital": 44427.35,
-      "generalExpense": 19040.29
-    },
-    "jun-2025": {
-      "allocated": 63467.64,
-      "humanCapital": 44427.35,
-      "generalExpense": 19040.29
-    },
-    "jul-2025": {
-      "allocated": 63467.64,
-      "humanCapital": 44427.35,
-      "generalExpense": 19040.29
-    },
-    "aug-2025": {
-      "allocated": 132144.9,
-      "humanCapital": 92501.43,
-      "generalExpense": 39643.47
-    },
-    "sep-2025": {
-      "allocated": 63467.64,
-      "humanCapital": 44427.35,
-      "generalExpense": 19040.29
-    },
-    "oct-2025": {
-      "allocated": 81838.01,
-      "humanCapital": 57286.61,
-      "generalExpense": 24551.4
-    },
-    "nov-2025": {
-      "allocated": 63467.64,
-      "humanCapital": 44427.35,
-      "generalExpense": 19040.29
-    },
-    "dec-2025": {
-      "allocated": 63467.64,
-      "humanCapital": 44427.35,
-      "generalExpense": 19040.29
-    },
-    "jan-2026": {
-      "allocated": 80101.22,
-      "humanCapital": 56070.85,
-      "generalExpense": 24030.37
-    },
-    "feb-2026": {
-      "allocated": 63467.64,
-      "humanCapital": 44427.35,
-      "generalExpense": 19040.29
-    }
+    "may-2025": { "allocated": 69500, "humanCapital": 6500, "generalExpense": 63000 },
+    "jun-2025": { "allocated": 69500, "humanCapital": 6500, "generalExpense": 63000 },
+    "jul-2025": { "allocated": 69500, "humanCapital": 6500, "generalExpense": 63000 },
+    "aug-2025": { "allocated": 69500, "humanCapital": 6500, "generalExpense": 63000 },
+    "sep-2025": { "allocated": 69500, "humanCapital": 6500, "generalExpense": 63000 },
+    "oct-2025": { "allocated": 69500, "humanCapital": 6500, "generalExpense": 63000 },
+    "nov-2025": { "allocated": 69500, "humanCapital": 6500, "generalExpense": 63000 },
+    "dec-2025": { "allocated": 69500, "humanCapital": 6500, "generalExpense": 63000 },
+    "jan-2026": { "allocated": 69500, "humanCapital": 6500, "generalExpense": 63000 },
+    "feb-2026": { "allocated": 69500, "humanCapital": 6500, "generalExpense": 63000 }
   },
   "tech": {
-    "may-2025": {
-      "allocated": 161925.44,
-      "humanCapital": 113347.81,
-      "generalExpense": 48577.63
-    },
-    "jun-2025": {
-      "allocated": 161925.44,
-      "humanCapital": 113347.81,
-      "generalExpense": 48577.63
-    },
-    "jul-2025": {
-      "allocated": 161925.44,
-      "humanCapital": 113347.81,
-      "generalExpense": 48577.63
-    },
-    "aug-2025": {
-      "allocated": 161925.44,
-      "humanCapital": 113347.81,
-      "generalExpense": 48577.63
-    },
-    "sep-2025": {
-      "allocated": 161925.44,
-      "humanCapital": 113347.81,
-      "generalExpense": 48577.63
-    },
-    "oct-2025": {
-      "allocated": 428077.35,
-      "humanCapital": 299654.15,
-      "generalExpense": 128423.21
-    },
-    "nov-2025": {
-      "allocated": 222733.06,
-      "humanCapital": 155913.14,
-      "generalExpense": 66819.92
-    },
-    "dec-2025": {
-      "allocated": 207059.12,
-      "humanCapital": 144941.38,
-      "generalExpense": 62117.73
-    },
-    "jan-2026": {
-      "allocated": 161925.44,
-      "humanCapital": 113347.81,
-      "generalExpense": 48577.63
-    },
-    "feb-2026": {
-      "allocated": 161925.44,
-      "humanCapital": 113347.81,
-      "generalExpense": 48577.63
-    }
+    "may-2025": { "allocated": 162500, "humanCapital": 154000, "generalExpense": 8500 },
+    "jun-2025": { "allocated": 162500, "humanCapital": 154000, "generalExpense": 8500 },
+    "jul-2025": { "allocated": 162500, "humanCapital": 154000, "generalExpense": 8500 },
+    "aug-2025": { "allocated": 162500, "humanCapital": 154000, "generalExpense": 8500 },
+    "sep-2025": { "allocated": 162500, "humanCapital": 154000, "generalExpense": 8500 },
+    "oct-2025": { "allocated": 162500, "humanCapital": 154000, "generalExpense": 8500 },
+    "nov-2025": { "allocated": 162500, "humanCapital": 154000, "generalExpense": 8500 },
+    "dec-2025": { "allocated": 162500, "humanCapital": 154000, "generalExpense": 8500 },
+    "jan-2026": { "allocated": 162500, "humanCapital": 154000, "generalExpense": 8500 },
+    "feb-2026": { "allocated": 162500, "humanCapital": 154000, "generalExpense": 8500 }
   },
   "product": {
-    "may-2025": {
-      "allocated": 20752.42,
-      "humanCapital": 14526.7,
-      "generalExpense": 6225.73
-    },
-    "jun-2025": {
-      "allocated": 20752.42,
-      "humanCapital": 14526.7,
-      "generalExpense": 6225.73
-    },
-    "jul-2025": {
-      "allocated": 20752.42,
-      "humanCapital": 14526.7,
-      "generalExpense": 6225.73
-    },
-    "aug-2025": {
-      "allocated": 20752.42,
-      "humanCapital": 14526.7,
-      "generalExpense": 6225.73
-    },
-    "sep-2025": {
-      "allocated": 20752.42,
-      "humanCapital": 14526.7,
-      "generalExpense": 6225.73
-    },
-    "oct-2025": {
-      "allocated": 30371.18,
-      "humanCapital": 21259.82,
-      "generalExpense": 9111.35
-    },
-    "nov-2025": {
-      "allocated": 20752.42,
-      "humanCapital": 14526.7,
-      "generalExpense": 6225.73
-    },
-    "dec-2025": {
-      "allocated": 20752.42,
-      "humanCapital": 14526.7,
-      "generalExpense": 6225.73
-    },
-    "jan-2026": {
-      "allocated": 42033.84,
-      "humanCapital": 29423.69,
-      "generalExpense": 12610.15
-    },
-    "feb-2026": {
-      "allocated": 52000,
-      "humanCapital": 36400,
-      "generalExpense": 15600
-    }
+    "may-2025": { "allocated": 60500, "humanCapital": 60000, "generalExpense": 500 },
+    "jun-2025": { "allocated": 60500, "humanCapital": 60000, "generalExpense": 500 },
+    "jul-2025": { "allocated": 60500, "humanCapital": 60000, "generalExpense": 500 },
+    "aug-2025": { "allocated": 60500, "humanCapital": 60000, "generalExpense": 500 },
+    "sep-2025": { "allocated": 60500, "humanCapital": 60000, "generalExpense": 500 },
+    "oct-2025": { "allocated": 60500, "humanCapital": 60000, "generalExpense": 500 },
+    "nov-2025": { "allocated": 60500, "humanCapital": 60000, "generalExpense": 500 },
+    "dec-2025": { "allocated": 60500, "humanCapital": 60000, "generalExpense": 500 },
+    "jan-2026": { "allocated": 60500, "humanCapital": 60000, "generalExpense": 500 },
+    "feb-2026": { "allocated": 60500, "humanCapital": 60000, "generalExpense": 500 }
   }
 }

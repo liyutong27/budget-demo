@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatUSDT } from "@/lib/format";
-import { calculateBudgetVsActual, calculateKPISummary, getActualTotal } from "@/lib/calculations";
+import { calculateBudgetVsActual, calculateKPISummary, getActualTotal, detectFlaggedTransactions } from "@/lib/calculations";
 import { buildSlackMessage } from "@/lib/slack";
 import { MONTHS, MONTH_LABELS, DEPARTMENTS, CHART_COLORS } from "@/lib/constants";
 import { Month, ActualsData, BudgetsData, Transaction } from "@/lib/types";
@@ -33,12 +34,23 @@ const actuals = actualsData as ActualsData;
 const transactions = transactionsData as Transaction[];
 const pl = plData as any;
 
-export default function ReportsPage() {
+export default function ReportsPageWrapper() {
+  return (
+    <Suspense>
+      <ReportsPage />
+    </Suspense>
+  );
+}
+
+function ReportsPage() {
+  const searchParams = useSearchParams();
+  const defaultTab = searchParams.get("tab") === "slack" ? "slack" : "pl";
+
   return (
     <div>
       <PageHeader title="Reports" description="Financial reports, P&L, and Slack integration" />
 
-      <Tabs defaultValue="pl" className="space-y-4">
+      <Tabs defaultValue={defaultTab} className="space-y-4">
         <TabsList>
           <TabsTrigger value="pl">P&L Statement</TabsTrigger>
           <TabsTrigger value="department">Department Reports</TabsTrigger>
@@ -99,7 +111,7 @@ const PL_STRUCTURE = [
   },
   {
     key: "generalExpense.operations",
-    label: "Operations",
+    label: "Internal Operation",
     subcategories: [
       { key: "legal", label: "Legal" },
       { key: "dailyOfficeUsage", label: "Daily Office Usage" },
@@ -119,7 +131,7 @@ function PLStatement() {
     new Set(PL_STRUCTURE.map((c) => c.key))
   );
 
-  const displayMonths: Month[] = ["dec-2025", "jan-2026", "feb-2026"];
+  const displayMonths: Month[] = MONTHS.slice(-3);
 
   function toggleCategory(cat: string) {
     setExpandedCategories((prev) => {
@@ -380,16 +392,18 @@ function SlackIntegration() {
   const [webhookUrl, setWebhookUrl] = useState("");
   const [channel, setChannel] = useState("#finance");
   const [reportType, setReportType] = useState("budget_alerts");
+  const [deptFilter, setDeptFilter] = useState("all");
   const [sending, setSending] = useState(false);
 
-  const month: Month = "feb-2026";
+  const month: Month = MONTHS[MONTHS.length - 1];
   const kpi = calculateKPISummary(budgets, actuals, transactions, month, "jan-2026");
   const bva = calculateBudgetVsActual(budgets, actuals, month);
 
-  // Build department alerts
+  // Build department alerts (filtered by selected department)
   const deptAlerts: DeptAlert[] = useMemo(() => {
     return bva
       .filter((d) => d.allocated > 0 || d.actual > 0)
+      .filter((d) => deptFilter === "all" || d.departmentId === deptFilter)
       .map((d) => ({
         departmentName: d.departmentName,
         departmentId: d.departmentId,
@@ -399,63 +413,30 @@ function SlackIntegration() {
         status: d.utilization > 100 ? "over" as const : d.utilization > 90 ? "near" as const : "on-track" as const,
       }))
       .sort((a, b) => b.utilization - a.utilization);
-  }, [bva]);
+  }, [bva, deptFilter]);
 
-  // Detect anomalous expenses
+  // Detect anomalous expenses using shared smart detection (same rules as dashboard)
   const anomalies: AnomalyAlert[] = useMemo(() => {
-    const monthTxns = transactions.filter((t) => t.month === month);
-    const results: AnomalyAlert[] = [];
-    const seen = new Set<string>();
-
-    // High-value general expenses > $8000 (salaries excluded)
-    monthTxns
-      .filter((t) => t.amount > 8000 && t.type === "general-expense")
-      .forEach((t) => {
-        const id = `${t.date}-${t.description}-${t.amount}`;
-        if (!seen.has(id)) {
-          seen.add(id);
-          results.push({
-            type: "high_value",
-            description: t.description,
-            amount: t.amount,
-            department: DEPARTMENTS.find((d) => d.id === t.department)?.name ?? t.department,
-            category: t.category,
-          });
-        }
-      });
-
-    // Flagged transactions (any type)
-    monthTxns
-      .filter((t) => t.flagged)
-      .forEach((t) => {
-        const id = `${t.date}-${t.description}-${t.amount}`;
-        if (!seen.has(id)) {
-          seen.add(id);
-          results.push({
-            type: "flagged",
-            description: t.description,
-            amount: t.amount,
-            department: DEPARTMENTS.find((d) => d.id === t.department)?.name ?? t.department,
-            category: t.category,
-          });
-        } else {
-          // Already added as high_value, mark as flagged too
-          const existing = results.find(
-            (r) => r.description === t.description && r.amount === t.amount
-          );
-          if (existing) existing.type = "flagged";
-        }
-      });
-
-    return results.sort((a, b) => b.amount - a.amount);
-  }, [month]);
+    const flaggedItems = detectFlaggedTransactions(transactions, actuals, [month]);
+    return flaggedItems
+      .filter((f) => deptFilter === "all" || f.transaction.department === deptFilter)
+      .map((f) => ({
+        type: (f.severity === "critical" ? "high_value" : f.transaction.flagged ? "flagged" : "high_value") as "high_value" | "flagged",
+        description: `${f.transaction.description} — ${f.reasons[0]}`,
+        amount: f.transaction.amount,
+        department: DEPARTMENTS.find((d) => d.id === f.transaction.department)?.name ?? f.transaction.department,
+        category: f.transaction.category,
+      }));
+  }, [month, deptFilter]);
 
   // Build preview blocks for the Slack-style message
   const previewBlocks = useMemo(() => {
     const blocks: { type: string; content: string; style?: string }[] = [];
 
+    const deptLabel = deptFilter === "all" ? "" : ` - ${DEPARTMENTS.find((d) => d.id === deptFilter)?.name ?? deptFilter}`;
+
     if (reportType === "budget_alerts") {
-      blocks.push({ type: "header", content: `Budget Alerts - ${MONTH_LABELS[month]}` });
+      blocks.push({ type: "header", content: `Budget Alerts${deptLabel} - ${MONTH_LABELS[month]}` });
       blocks.push({ type: "divider", content: "" });
 
       deptAlerts.forEach((d) => {
@@ -495,7 +476,7 @@ function SlackIntegration() {
         });
       }
     } else if (reportType === "anomaly_report") {
-      blocks.push({ type: "header", content: `Anomaly Report - ${MONTH_LABELS[month]}` });
+      blocks.push({ type: "header", content: `Anomaly Report${deptLabel} - ${MONTH_LABELS[month]}` });
       blocks.push({ type: "divider", content: "" });
 
       if (anomalies.length === 0) {
@@ -515,12 +496,14 @@ function SlackIntegration() {
       }
     } else {
       // full_summary - use existing buildSlackMessage
-      blocks.push({ type: "header", content: `Full Summary - ${MONTH_LABELS[month]}` });
+      blocks.push({ type: "header", content: `Full Summary${deptLabel} - ${MONTH_LABELS[month]}` });
       blocks.push({ type: "divider", content: "" });
-      blocks.push({
-        type: "text",
-        content: `Total Budget: $${kpi.totalBudget.toLocaleString()} | Spend: $${kpi.totalSpend.toLocaleString()} | Utilization: ${kpi.utilization.toFixed(1)}% | Flagged: ${kpi.flaggedCount}`,
-      });
+      if (deptFilter === "all") {
+        blocks.push({
+          type: "text",
+          content: `Total Budget: $${kpi.totalBudget.toLocaleString()} | Spend: $${kpi.totalSpend.toLocaleString()} | Utilization: ${kpi.utilization.toFixed(1)}% | Flagged: ${kpi.flaggedCount}`,
+        });
+      }
       blocks.push({ type: "divider", content: "" });
       deptAlerts.forEach((d) => {
         const compactActual = `$${Math.round(d.actual / 1000)}K`;
@@ -540,7 +523,9 @@ function SlackIntegration() {
 
   // Build Slack API-format message for sending
   function buildAlertSlackPayload() {
-    if (reportType === "full_summary") {
+    const scopeLabel = deptFilter === "all" ? "" : ` - ${DEPARTMENTS.find((d) => d.id === deptFilter)?.name ?? deptFilter}`;
+
+    if (reportType === "full_summary" && deptFilter === "all") {
       return buildSlackMessage(reportType, kpi, bva, MONTH_LABELS[month]);
     }
 
@@ -550,8 +535,10 @@ function SlackIntegration() {
         text: {
           type: "plain_text",
           text: reportType === "budget_alerts"
-            ? `Budget Alerts - ${MONTH_LABELS[month]}`
-            : `Anomaly Report - ${MONTH_LABELS[month]}`,
+            ? `Budget Alerts${scopeLabel} - ${MONTH_LABELS[month]}`
+            : reportType === "anomaly_report"
+            ? `Anomaly Report${scopeLabel} - ${MONTH_LABELS[month]}`
+            : `Summary${scopeLabel} - ${MONTH_LABELS[month]}`,
         },
       },
       { type: "divider" },
@@ -596,8 +583,7 @@ function SlackIntegration() {
           });
         });
       }
-    } else {
-      // anomaly_report
+    } else if (reportType === "anomaly_report") {
       if (anomalies.length === 0) {
         slackBlocks.push({
           type: "section",
@@ -615,6 +601,16 @@ function SlackIntegration() {
           });
         });
       }
+    } else {
+      // full_summary with department filter
+      deptAlerts.forEach((d) => {
+        const compactActual = `$${Math.round(d.actual / 1000)}K`;
+        const compactBudget = `$${Math.round(d.allocated / 1000)}K`;
+        slackBlocks.push({
+          type: "section",
+          text: { type: "mrkdwn", text: `*${d.departmentName}*: ${compactActual} / ${compactBudget} (${d.utilization.toFixed(0)}%)` },
+        });
+      });
     }
 
     slackBlocks.push({
@@ -683,6 +679,7 @@ function SlackIntegration() {
 
   const overCount = deptAlerts.filter((d) => d.status === "over").length;
   const nearCount = deptAlerts.filter((d) => d.status === "near").length;
+  const scopeNote = deptFilter !== "all" ? DEPARTMENTS.find((d) => d.id === deptFilter)?.name : null;
 
   return (
     <div className="grid grid-cols-2 gap-4">
@@ -713,23 +710,39 @@ function SlackIntegration() {
                 className="bg-[#0a0a1a] border-[#1e1e3a] text-[#e8e8ff]"
               />
             </div>
-            <div className="space-y-2">
-              <Label className="text-xs text-[#6b6b9a]">Report Type</Label>
-              <Select value={reportType} onValueChange={setReportType}>
-                <SelectTrigger className="bg-[#0a0a1a] border-[#1e1e3a] text-[#e8e8ff]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-[#0f0f22] border-[#1e1e3a]">
-                  <SelectItem value="budget_alerts" className="text-[#e8e8ff]">Budget Alerts</SelectItem>
-                  <SelectItem value="anomaly_report" className="text-[#e8e8ff]">Anomaly Report</SelectItem>
-                  <SelectItem value="full_summary" className="text-[#e8e8ff]">Full Summary</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-xs text-[#6b6b9a]">Report Type</Label>
+                <Select value={reportType} onValueChange={setReportType}>
+                  <SelectTrigger className="bg-[#0a0a1a] border-[#1e1e3a] text-[#e8e8ff]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#0f0f22] border-[#1e1e3a]">
+                    <SelectItem value="budget_alerts" className="text-[#e8e8ff]">Budget Alerts</SelectItem>
+                    <SelectItem value="anomaly_report" className="text-[#e8e8ff]">Anomaly Report</SelectItem>
+                    <SelectItem value="full_summary" className="text-[#e8e8ff]">Full Summary</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs text-[#6b6b9a]">Department Scope</Label>
+                <Select value={deptFilter} onValueChange={setDeptFilter}>
+                  <SelectTrigger className="bg-[#0a0a1a] border-[#1e1e3a] text-[#e8e8ff]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#0f0f22] border-[#1e1e3a]">
+                    <SelectItem value="all" className="text-[#e8e8ff]">All Departments</SelectItem>
+                    {DEPARTMENTS.map((d) => (
+                      <SelectItem key={d.id} value={d.id} className="text-[#e8e8ff]">{d.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="space-y-2">
               <Label className="text-xs text-[#6b6b9a]">Alert Thresholds</Label>
               <p className="text-[10px] text-[#6b6b9a]">
-                Auto-alert when department utilization exceeds 90% (warning) or 100% (critical). General expenses &gt; $8,000 and flagged items are reported as anomalies. Salary payments are excluded.
+                Auto-alert when department utilization exceeds 90% (warning) or 100% (critical). General expenses &gt; $8,000 and flagged items are reported as anomalies. Use &quot;Department Scope&quot; to send alerts only for a specific department&apos;s channel &mdash; this prevents exposing company-wide spend data.
               </p>
             </div>
             <div className="flex gap-2">

@@ -1,6 +1,7 @@
 "use client";
 
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, Suspense, useMemo, useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,7 +19,9 @@ import {
   getPreviousPeriod,
   getTransactionsForDepartmentMonths,
   getActualTotal,
+  detectFlaggedTransactions,
 } from "@/lib/calculations";
+import type { FlaggedItem } from "@/lib/calculations";
 import { MONTHS, MONTH_LABELS, DEPARTMENTS, DEPARTMENT_MAP, QUARTER_LIST, QUARTER_LABELS } from "@/lib/constants";
 import { Month, ActualsData, BudgetsData, Transaction, TimePeriodMode, Quarter, GEBudgetRow } from "@/lib/types";
 import budgetsData from "@/data/budgets.json";
@@ -32,15 +35,41 @@ import {
 const actuals = actualsData as ActualsData;
 const allTransactions = transactionsData as Transaction[];
 
-export default function BudgetPage() {
+export default function BudgetPageWrapper() {
+  return (
+    <Suspense>
+      <BudgetPage />
+    </Suspense>
+  );
+}
+
+function BudgetPage() {
+  const searchParams = useSearchParams();
   const [periodMode, setPeriodMode] = useState<TimePeriodMode>("month");
-  const [periodValue, setPeriodValue] = useState<string>("feb-2026");
+  const [periodValue, setPeriodValue] = useState<string>(MONTHS[MONTHS.length - 1]);
   const [activeTab, setActiveTab] = useState<"ge" | "hc">("ge");
   const [expandedDept, setExpandedDept] = useState<string | null>(null);
+
+  const [highlightTxn, setHighlightTxn] = useState<string | null>(null);
+
+  // Read URL params on mount for drill-down from dashboard
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    const dept = searchParams.get("dept");
+    const highlight = searchParams.get("highlight");
+    if (tab === "hc") setActiveTab("hc");
+    if (dept) setExpandedDept(dept);
+    if (highlight) {
+      setHighlightTxn(highlight);
+      // Clear highlight after 3 seconds
+      const timer = setTimeout(() => setHighlightTxn(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams]);
   const [editingDept, setEditingDept] = useState<string | null>(null);
   const [editValues, setEditValues] = useState<Record<string, number>>({});
   const [budgets, setBudgets] = useState<BudgetsData>(budgetsData as BudgetsData);
-  const [, setRenderTick] = useState(0);
+  const [resolvedTxns, setResolvedTxns] = useState<Set<string>>(new Set());
 
   const months = useMemo(() => getMonthsForPeriod(periodMode, periodValue), [periodMode, periodValue]);
   const geRows = useMemo(() => calculateGEBudgetRows(budgets, actuals, months), [budgets, actuals, months]);
@@ -85,13 +114,27 @@ export default function BudgetPage() {
     return { totalHCBudget, totalHCActual, periodChange, avgPerDept, hasPrevious: !!prev };
   }, [budgets, months, periodMode, periodValue]);
 
+  // ─── Smart flagged detection (same rules as dashboard) ───
+  const smartFlagMap = useMemo(() => {
+    const items = detectFlaggedTransactions(allTransactions, actuals, months);
+    const map = new Map<string, FlaggedItem>();
+    items.forEach((f) => map.set(f.transaction.id, f));
+    return map;
+  }, [months]);
+
   // ─── Expanded GE transactions (only general-expense type) ───
   const expandedTransactions = useMemo(() => {
     if (!expandedDept) return [];
     return getTransactionsForDepartmentMonths(allTransactions, expandedDept, months)
       .filter((t) => t.type === "general-expense")
+      .map((t) => {
+        if (resolvedTxns.has(t.id)) return { ...t, flagged: false, status: "approved" as const };
+        // Mark as flagged if smart detection caught it
+        if (smartFlagMap.has(t.id)) return { ...t, flagged: true };
+        return t;
+      })
       .sort((a, b) => b.amount - a.amount);
-  }, [expandedDept, months]);
+  }, [expandedDept, months, resolvedTxns, smartFlagMap]);
 
   // ─── Budget Editor ──────────────────────────────────────────
   function openEditor(deptId: string) {
@@ -105,7 +148,14 @@ export default function BudgetPage() {
 
   function saveBudget() {
     if (!editingDept) return;
-    const newBudgets = { ...budgets };
+    const newBudgets = Object.fromEntries(
+      Object.entries(budgets).map(([deptId, months]) => [
+        deptId,
+        Object.fromEntries(
+          Object.entries(months).map(([m, data]) => [m, { ...data }])
+        ),
+      ])
+    );
     if (!newBudgets[editingDept]) newBudgets[editingDept] = {};
     MONTHS.forEach((m) => {
       const geVal = editValues[m] ?? 0;
@@ -122,11 +172,7 @@ export default function BudgetPage() {
   }
 
   function resolveTransaction(txnId: string) {
-    const idx = allTransactions.findIndex((t) => t.id === txnId);
-    if (idx !== -1) {
-      allTransactions[idx] = { ...allTransactions[idx], flagged: false, status: "approved" };
-    }
-    setRenderTick((t) => t + 1);
+    setResolvedTxns((prev) => { const next = new Set(prev); next.add(txnId); return next; });
   }
 
   function toggleExpand(deptId: string) {
@@ -177,7 +223,7 @@ export default function BudgetPage() {
                   : "text-[#6b6b9a] hover:text-[#e8e8ff]"
               }`}
             >
-              Expense Budget
+              General Expense
             </button>
             <button
               onClick={() => { setActiveTab("hc"); setExpandedDept(null); }}
@@ -194,7 +240,7 @@ export default function BudgetPage() {
           {/* Period Mode Toggle */}
           <div className="flex items-center rounded-lg border border-[#1e1e3a] overflow-hidden">
             <button
-              onClick={() => { setPeriodMode("month"); setPeriodValue("feb-2026"); }}
+              onClick={() => { setPeriodMode("month"); setPeriodValue(MONTHS[MONTHS.length - 1]); }}
               className={`px-3 py-1.5 text-xs font-medium transition-colors ${
                 periodMode === "month"
                   ? "bg-[rgba(153,151,255,0.12)] text-[#ACAAFF]"
@@ -204,7 +250,7 @@ export default function BudgetPage() {
               Month
             </button>
             <button
-              onClick={() => { setPeriodMode("quarter"); setPeriodValue("Q1-2026"); }}
+              onClick={() => { setPeriodMode("quarter"); setPeriodValue(QUARTER_LIST[QUARTER_LIST.length - 1]); }}
               className={`px-3 py-1.5 text-xs font-medium transition-colors ${
                 periodMode === "quarter"
                   ? "bg-[rgba(153,151,255,0.12)] text-[#ACAAFF]"
@@ -375,23 +421,45 @@ export default function BudgetPage() {
                                         </thead>
                                         <tbody>
                                           {deptTransactions.map((txn) => (
-                                            <tr key={txn.id} className="border-b border-[#1e1e3a] last:border-0 hover:bg-[rgba(153,151,255,0.06)]">
+                                            <tr
+                                              key={txn.id}
+                                              id={`txn-${txn.id}`}
+                                              ref={(el) => {
+                                                if (el && highlightTxn === txn.id) {
+                                                  el.scrollIntoView({ behavior: "smooth", block: "center" });
+                                                }
+                                              }}
+                                              className={`border-b border-[#1e1e3a] last:border-0 hover:bg-[rgba(153,151,255,0.06)] transition-colors ${
+                                                highlightTxn === txn.id
+                                                  ? "bg-[rgba(255,184,108,0.15)] border-[rgba(255,184,108,0.3)]"
+                                                  : ""
+                                              }`}
+                                            >
                                               <td className="py-2 text-[#e8e8ff]">{txn.applicant}</td>
                                               <td className="py-2 text-[#6b6b9a]">{txn.category}</td>
                                               <td className="py-2 max-w-[200px] truncate text-[#e8e8ff]">{txn.description}</td>
                                               <td className="py-2 text-right font-mono text-[#e8e8ff]">{formatUSDT(txn.amount)}</td>
                                               <td className="py-2 text-center">
                                                 {txn.flagged ? (
-                                                  <div className="flex items-center gap-2 justify-center">
-                                                    <Badge variant="destructive" className="text-[10px]">flagged</Badge>
-                                                    <Button
-                                                      size="sm"
-                                                      className="h-6 px-2 text-xs bg-green-600 text-white hover:bg-green-700"
-                                                      onClick={() => resolveTransaction(txn.id)}
-                                                    >
-                                                      <CheckCircle2 className="h-3 w-3 mr-1" />
-                                                      Resolve
-                                                    </Button>
+                                                  <div className="flex flex-col items-center gap-1">
+                                                    <div className="flex items-center gap-2">
+                                                      <Badge variant="destructive" className="text-[10px]">
+                                                        {smartFlagMap.get(txn.id)?.severity ?? "flagged"}
+                                                      </Badge>
+                                                      <Button
+                                                        size="sm"
+                                                        className="h-6 px-2 text-xs bg-green-600 text-white hover:bg-green-700"
+                                                        onClick={() => resolveTransaction(txn.id)}
+                                                      >
+                                                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                                                        Resolve
+                                                      </Button>
+                                                    </div>
+                                                    {smartFlagMap.get(txn.id) && (
+                                                      <p className="text-[9px] text-[#ffb86c] max-w-[250px] text-center leading-tight">
+                                                        {smartFlagMap.get(txn.id)!.reasons[0]}
+                                                      </p>
+                                                    )}
                                                   </div>
                                                 ) : (
                                                   <Badge variant="secondary" className="text-[10px]">{txn.status}</Badge>
@@ -462,7 +530,7 @@ export default function BudgetPage() {
                     <th className="text-right py-2 font-medium">HC Budget</th>
                     <th className="text-right py-2 font-medium">HC Actual</th>
                     <th className="text-right py-2 font-medium">Variance</th>
-                    <th className="text-right py-2 font-medium">Headcount Cost</th>
+                    <th className="text-left py-2 font-medium w-40">Utilization</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -485,7 +553,17 @@ export default function BudgetPage() {
                       <td className={`py-4 text-right font-mono ${row.variance >= 0 ? "text-green-400" : "text-red-400"}`}>
                         {row.variance >= 0 ? "+" : ""}{formatUSDT(row.variance)}
                       </td>
-                      <td className="py-4 text-right font-mono text-[#e8e8ff]">{formatUSDT(row.hcActual)}</td>
+                      <td className="py-4">
+                        <div className="flex items-center gap-2">
+                          <Progress
+                            value={Math.min(row.hcBudget > 0 ? (row.hcActual / row.hcBudget) * 100 : 0, 100)}
+                            className="h-2 w-24"
+                          />
+                          <span className="text-xs text-[#6b6b9a] w-12">
+                            {row.hcBudget > 0 ? ((row.hcActual / row.hcBudget) * 100).toFixed(0) : 0}%
+                          </span>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
