@@ -145,3 +145,40 @@ export interface Insight {
   type: "warning" | "info" | "success" | "optimization";
   text: string;
 }
+
+// Dashboard data bundle (for dynamic fetching)
+export interface DashboardData {
+  budgets: BudgetsData;
+  actuals: ActualsData;
+  transactions: Transaction[];
+  treasury: TreasuryData;
+  plStatement: any;
+}
+
+export interface TreasuryData {
+  accounts: { name: string; [month: string]: string | number }[];
+  totals: Record<string, number>;
+}
+
+// Claude API analysis types
+export interface FinancialAnalysis {
+  summary: string;
+  anomalies: AnalysisItem[];
+  optimizations: AnalysisItem[];
+  trends: AnalysisItem[];
+  departmentInsights: DepartmentInsightItem[];
+  generatedAt: string;
+}
+
+export interface AnalysisItem {
+  type: "warning" | "info" | "success" | "optimization";
+  title: string;
+  text: string;
+  severity?: "high" | "medium" | "low";
+}
+
+export interface DepartmentInsightItem {
+  departmentId: string;
+  departmentName: string;
+  insight: string;
+}

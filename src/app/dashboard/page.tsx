@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { useFinancialAnalysis } from "@/lib/use-analysis";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -47,6 +48,8 @@ import {
   Lightbulb,
   CheckCircle,
   Info,
+  RefreshCw,
+  Loader2,
 } from "lucide-react";
 
 const budgets = budgetsData as BudgetsData;
@@ -169,11 +172,12 @@ export default function DashboardPage() {
     [currentMonths, prevMonths]
   );
 
-  // ── AI insights ───
-  const insights = useMemo(
+  // ── AI insights (Claude API with rule-based fallback) ───
+  const ruleInsights = useMemo(
     () => generateInsights(budgets, actuals, transactions, currentMonths, prevMonths),
     [currentMonths, prevMonths]
   );
+  const { analysis: claudeAnalysis, loading: analysisLoading, error: analysisError, refetch: refetchAnalysis } = useFinancialAnalysis(monthValue);
 
   // ── Previous period label ───
   const prevLabel = prevPeriod ? periodLabel(prevPeriod.mode, prevPeriod.value) : null;
@@ -587,36 +591,136 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* AI Insights */}
+          {/* AI Insights (Claude-powered) */}
           <Card className="col-span-2 rounded-xl border border-[#1e1e3a] bg-[#0f0f22]">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-[#6b6b9a] flex items-center gap-2">
-                <Sparkles className="h-3.5 w-3.5 text-[#9997FF]" />
-                AI Insights
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium text-[#6b6b9a] flex items-center gap-2">
+                  <Sparkles className="h-3.5 w-3.5 text-[#9997FF]" />
+                  AI Insights
+                  {claudeAnalysis && <Badge variant="outline" className="text-[9px] border-[#9997FF]/30 text-[#9997FF] ml-1">Claude</Badge>}
+                </CardTitle>
+                <button
+                  onClick={refetchAnalysis}
+                  disabled={analysisLoading}
+                  className="p-1 rounded hover:bg-[rgba(153,151,255,0.1)] text-[#6b6b9a] hover:text-[#9997FF] transition-colors disabled:opacity-50"
+                >
+                  {analysisLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+                </button>
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2.5 max-h-[280px] overflow-y-auto pr-1">
-                {insights.map((insight, i) => (
-                  <div key={i} className="flex items-start gap-2 text-xs">
-                    <div className={`mt-0.5 shrink-0 p-0.5 rounded ${
-                      insight.type === "warning"
-                        ? "text-[#ffb86c]"
-                        : insight.type === "success"
-                        ? "text-[#50fa7b]"
-                        : insight.type === "optimization"
-                        ? "text-[#9997FF]"
-                        : "text-[#6b6b9a]"
-                    }`}>
-                      {insight.type === "warning" && <AlertTriangle className="h-3 w-3" />}
-                      {insight.type === "success" && <CheckCircle className="h-3 w-3" />}
-                      {insight.type === "optimization" && <Lightbulb className="h-3 w-3" />}
-                      {insight.type === "info" && <Info className="h-3 w-3" />}
+              {analysisLoading && !claudeAnalysis ? (
+                <div className="flex items-center justify-center py-8 text-xs text-[#6b6b9a] gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin text-[#9997FF]" />
+                  正在分析财务数据...
+                </div>
+              ) : claudeAnalysis ? (
+                <div className="space-y-3 max-h-[320px] overflow-y-auto pr-1">
+                  {/* Summary */}
+                  <p className="text-xs text-[#ACAAFF] leading-relaxed font-medium">{claudeAnalysis.summary}</p>
+                  <hr className="border-[#1e1e3a]" />
+
+                  {/* Anomalies */}
+                  {claudeAnalysis.anomalies?.length > 0 && (
+                    <div className="space-y-1.5">
+                      <p className="text-[10px] text-[#5a5a80] uppercase tracking-wider font-medium">异常预警</p>
+                      {claudeAnalysis.anomalies.map((item, i) => (
+                        <div key={`a-${i}`} className="flex items-start gap-2 text-xs">
+                          <AlertTriangle className={`h-3 w-3 mt-0.5 shrink-0 ${item.severity === "high" ? "text-[#ff6b6b]" : "text-[#ffb86c]"}`} />
+                          <div>
+                            <span className="font-medium text-[#e8e8ff]">{item.title}</span>
+                            <p className="text-[#6b6b9a] mt-0.5 leading-relaxed">{item.text}</p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <p className="text-[#e8e8ff] leading-relaxed">{insight.text}</p>
-                  </div>
-                ))}
-              </div>
+                  )}
+
+                  {/* Optimizations */}
+                  {claudeAnalysis.optimizations?.length > 0 && (
+                    <div className="space-y-1.5">
+                      <p className="text-[10px] text-[#5a5a80] uppercase tracking-wider font-medium">优化建议</p>
+                      {claudeAnalysis.optimizations.map((item, i) => (
+                        <div key={`o-${i}`} className="flex items-start gap-2 text-xs">
+                          <Lightbulb className="h-3 w-3 mt-0.5 shrink-0 text-[#9997FF]" />
+                          <div>
+                            <span className="font-medium text-[#e8e8ff]">{item.title}</span>
+                            <p className="text-[#6b6b9a] mt-0.5 leading-relaxed">{item.text}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Trends */}
+                  {claudeAnalysis.trends?.length > 0 && (
+                    <div className="space-y-1.5">
+                      <p className="text-[10px] text-[#5a5a80] uppercase tracking-wider font-medium">趋势分析</p>
+                      {claudeAnalysis.trends.map((item, i) => (
+                        <div key={`t-${i}`} className="flex items-start gap-2 text-xs">
+                          {item.type === "warning" ? (
+                            <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0 text-[#ffb86c]" />
+                          ) : item.type === "success" ? (
+                            <CheckCircle className="h-3 w-3 mt-0.5 shrink-0 text-[#50fa7b]" />
+                          ) : (
+                            <Info className="h-3 w-3 mt-0.5 shrink-0 text-[#6b6b9a]" />
+                          )}
+                          <div>
+                            <span className="font-medium text-[#e8e8ff]">{item.title}</span>
+                            <p className="text-[#6b6b9a] mt-0.5 leading-relaxed">{item.text}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Department Insights */}
+                  {claudeAnalysis.departmentInsights?.length > 0 && (
+                    <div className="space-y-1.5">
+                      <p className="text-[10px] text-[#5a5a80] uppercase tracking-wider font-medium">部门分析</p>
+                      {claudeAnalysis.departmentInsights.map((item, i) => (
+                        <div key={`d-${i}`} className="text-xs py-1 px-2 rounded bg-[rgba(153,151,255,0.03)]">
+                          <span className="font-medium text-[#ACAAFF]">{item.departmentName}</span>
+                          <p className="text-[#6b6b9a] mt-0.5 leading-relaxed">{item.insight}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {claudeAnalysis.generatedAt && (
+                    <p className="text-[9px] text-[#3a3a5c] pt-1">
+                      Generated: {new Date(claudeAnalysis.generatedAt).toLocaleString()}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                /* Fallback to rule-based insights */
+                <div className="space-y-2.5 max-h-[280px] overflow-y-auto pr-1">
+                  {analysisError && (
+                    <p className="text-[10px] text-[#ffb86c] mb-2">⚠ Claude API unavailable, showing rule-based analysis</p>
+                  )}
+                  {ruleInsights.map((insight, i) => (
+                    <div key={i} className="flex items-start gap-2 text-xs">
+                      <div className={`mt-0.5 shrink-0 p-0.5 rounded ${
+                        insight.type === "warning"
+                          ? "text-[#ffb86c]"
+                          : insight.type === "success"
+                          ? "text-[#50fa7b]"
+                          : insight.type === "optimization"
+                          ? "text-[#9997FF]"
+                          : "text-[#6b6b9a]"
+                      }`}>
+                        {insight.type === "warning" && <AlertTriangle className="h-3 w-3" />}
+                        {insight.type === "success" && <CheckCircle className="h-3 w-3" />}
+                        {insight.type === "optimization" && <Lightbulb className="h-3 w-3" />}
+                        {insight.type === "info" && <Info className="h-3 w-3" />}
+                      </div>
+                      <p className="text-[#e8e8ff] leading-relaxed">{insight.text}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
