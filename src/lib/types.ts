@@ -3,7 +3,7 @@ export type Month =
   | "sep-2025" | "oct-2025" | "nov-2025" | "dec-2025"
   | "jan-2026" | "feb-2026";
 
-export type DepartmentId = "tech" | "gtm" | "design" | "product" | "operations" | "community";
+export type DepartmentId = "tech" | "gtm" | "design" | "product" | "operations";
 
 export interface Department {
   id: string;

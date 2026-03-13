@@ -197,7 +197,7 @@ export default function BudgetPage() {
           <CardContent className="pt-4">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-[#1e1e3a] text-xs text-[#6b6b9a]">
+                <tr className="border-b border-[#1e1e3a] text-[10px] text-[#5a5a80] uppercase tracking-wider">
                   <th className="text-left py-2 font-medium">Department</th>
                   <th className="text-right py-2 font-medium">Allocated</th>
                   <th className="text-right py-2 font-medium">Variance</th>
@@ -216,19 +216,28 @@ export default function BudgetPage() {
                   return (
                     <Fragment key={row.departmentId}>
                       <tr
-                        className="border-b border-[#1e1e3a] last:border-0 hover:bg-[rgba(153,151,255,0.06)] transition-colors"
+                        className="border-b border-[#1e1e3a] last:border-0 hover:bg-[rgba(153,151,255,0.06)] transition-colors cursor-pointer group"
+                        onClick={() => toggleExpand(row.departmentId)}
                       >
-                        <td className="py-3">
+                        <td className="py-4">
                           <div className="flex items-center gap-2">
-                            <div className="w-2.5 h-2.5 rounded-full" style={{ background: row.color }} />
-                            <span className="font-medium text-[#e8e8ff]">{row.departmentName}</span>
+                            {isExpanded ? (
+                              <ChevronDown className="h-3.5 w-3.5 text-[#ACAAFF]" />
+                            ) : (
+                              <ChevronRight className="h-3.5 w-3.5 text-[#6b6b9a] group-hover:text-[#ACAAFF] transition-colors" />
+                            )}
+                            <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: row.color }} />
+                            <div>
+                              <span className="font-medium text-[#e8e8ff]">{row.departmentName}</span>
+                              <p className="text-[10px] text-[#5a5a80] mt-0.5">{DEPARTMENT_MAP[row.departmentId]?.lead}</p>
+                            </div>
                           </div>
                         </td>
-                        <td className="py-3 text-right font-mono text-[#e8e8ff]">{formatUSDT(row.allocated)}</td>
-                        <td className={`py-3 text-right font-mono ${row.variance >= 0 ? "text-green-400" : "text-red-400"}`}>
+                        <td className="py-4 text-right font-mono text-[#e8e8ff]">{formatUSDT(row.allocated)}</td>
+                        <td className={`py-4 text-right font-mono ${row.variance >= 0 ? "text-green-400" : "text-red-400"}`}>
                           {row.variance >= 0 ? "+" : ""}{formatUSDT(row.variance)}
                         </td>
-                        <td className="py-3">
+                        <td className="py-4">
                           <div className="flex items-center gap-2">
                             <Progress
                               value={Math.min(row.utilization, 100)}
@@ -239,30 +248,24 @@ export default function BudgetPage() {
                             </span>
                           </div>
                         </td>
-                        <td className="py-3 text-right font-mono">
-                          <button
-                            className="hover:underline cursor-pointer flex items-center gap-1 justify-end text-[#ACAAFF] hover:text-[#9997FF]"
-                            onClick={() => toggleExpand(row.departmentId)}
-                            title="Click to view transactions"
-                          >
-                            {isExpanded ? (
-                              <ChevronDown className="h-3.5 w-3.5" />
-                            ) : (
-                              <ChevronRight className="h-3.5 w-3.5" />
-                            )}
-                            {formatUSDT(row.actual)}
-                          </button>
+                        <td className="py-4 text-right font-mono text-[#e8e8ff]">
+                          {formatUSDT(row.actual)}
                         </td>
-                        <td className="py-3">
-                          <Badge
-                            variant={status === "Over Budget" ? "destructive" : status === "At Risk" ? "secondary" : "outline"}
-                            className="text-[10px]"
+                        <td className="py-4">
+                          <span
+                            className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium ${
+                              status === "Over Budget"
+                                ? "bg-[rgba(255,107,107,0.12)] text-[#ff6b6b] border-[rgba(255,107,107,0.2)]"
+                                : status === "At Risk"
+                                ? "bg-[rgba(255,184,108,0.12)] text-[#ffb86c] border-[rgba(255,184,108,0.2)]"
+                                : "bg-[rgba(80,250,123,0.12)] text-[#50fa7b] border-[rgba(80,250,123,0.2)]"
+                            }`}
                           >
                             {status}
-                          </Badge>
+                          </span>
                         </td>
-                        <td className="py-3 text-right">
-                          <Button variant="ghost" size="sm" onClick={() => openEditor(row.departmentId)} title="Edit budget" className="text-[#6b6b9a] hover:text-[#e8e8ff] hover:bg-[rgba(153,151,255,0.06)]">
+                        <td className="py-4 text-right">
+                          <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openEditor(row.departmentId); }} title="Edit budget" className="text-[#6b6b9a] hover:text-[#e8e8ff] hover:bg-[rgba(153,151,255,0.06)]">
                             <Pencil className="h-3 w-3" />
                           </Button>
                         </td>
@@ -271,7 +274,7 @@ export default function BudgetPage() {
                       {isExpanded && (
                         <tr>
                           <td colSpan={7} className="p-0">
-                            <div className="bg-[#0a0a1a] border-y border-[#1e1e3a] px-6 py-4">
+                            <div className="bg-[#0a0a1a] border-y border-[#1e1e3a] border-l-2 border-l-[#9997FF] px-6 py-4">
                               {deptTransactions.length === 0 ? (
                                 <p className="text-sm text-[#6b6b9a] py-2">No transactions found for this period.</p>
                               ) : (
@@ -328,6 +331,7 @@ export default function BudgetPage() {
                 })}
               </tbody>
             </table>
+            <p className="text-[11px] text-[#5a5a80] mt-4 text-center">Click any department row to view transactions</p>
           </CardContent>
         </Card>
       )}

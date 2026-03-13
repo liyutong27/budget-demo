@@ -34,6 +34,7 @@ const darkTooltipStyle = {
 
 const darkLegendStyle = {
   color: "#6b6b9a",
+  fontSize: 11,
 };
 
 export default function DashboardPage() {
@@ -82,7 +83,7 @@ export default function DashboardPage() {
       </PageHeader>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-4 gap-5 mb-8">
         <KPICard
           title="Total Budget"
           value={formatUSDT(kpi.totalBudget, true)}
@@ -116,21 +117,21 @@ export default function DashboardPage() {
       </div>
 
       {/* Charts Row 1 */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-3 gap-4 mb-8">
         <Card className="col-span-2 rounded-xl border border-[#1e1e3a] bg-[#0f0f22]">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-[#6b6b9a]">Budget vs Actuals</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={bva} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={bva} margin={{ top: 20, right: 20, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e1e3a" />
-                <XAxis dataKey="departmentName" tick={{ fontSize: 10, fill: "#6b6b9a" }} interval={0} angle={-20} textAnchor="end" height={60} stroke="#1e1e3a" />
+                <XAxis dataKey="departmentName" tick={{ fontSize: 11, fill: "#6b6b9a" }} interval={0} stroke="#1e1e3a" />
                 <YAxis tick={{ fontSize: 11, fill: "#6b6b9a" }} tickFormatter={(v) => `$${(Number(v) / 1000).toFixed(0)}K`} stroke="#1e1e3a" />
                 <Tooltip formatter={(v) => formatUSDT(Number(v))} contentStyle={darkTooltipStyle} labelStyle={{ color: "#6b6b9a" }} itemStyle={{ color: "#e8e8ff" }} />
                 <Legend wrapperStyle={darkLegendStyle} />
-                <Bar dataKey="allocated" name="Budget" fill={CHART_COLORS.budget} radius={[4, 4, 0, 0]} />
-                <Bar dataKey="actual" name="Actual" fill={CHART_COLORS.actual} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="allocated" name="Budget" fill={CHART_COLORS.budget} radius={[4, 4, 0, 0]} barSize={28} label={{ position: 'top' as const, fill: '#6b6b9a', fontSize: 10, formatter: (v: unknown) => formatUSDT(Number(v), true) }} />
+                <Bar dataKey="actual" name="Actual" fill={CHART_COLORS.actual} radius={[4, 4, 0, 0]} barSize={28} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -150,12 +151,28 @@ export default function DashboardPage() {
                   dataKey="value"
                   nameKey="name"
                   paddingAngle={2}
+                  label={((props: { cx: number; cy: number; midAngle: number; outerRadius: number; percent: number }) => {
+                    const RADIAN = Math.PI / 180;
+                    const radius = (props.outerRadius || 90) + 16;
+                    const x = (props.cx || 0) + radius * Math.cos(-(props.midAngle || 0) * RADIAN);
+                    const y = (props.cy || 0) + radius * Math.sin(-(props.midAngle || 0) * RADIAN);
+                    return (props.percent || 0) > 0.05 ? (
+                      <text x={x} y={y} fill="#6b6b9a" textAnchor="middle" fontSize={10}>
+                        {((props.percent || 0) * 100).toFixed(0)}%
+                      </text>
+                    ) : null;
+                  }) as unknown as boolean}
+                  labelLine={false}
                 >
                   {deptTotals.map((d, i) => (
                     <Cell key={i} fill={d.color} />
                   ))}
                 </Pie>
                 <Tooltip formatter={(v) => formatUSDT(Number(v))} contentStyle={darkTooltipStyle} labelStyle={{ color: "#6b6b9a" }} itemStyle={{ color: "#e8e8ff" }} />
+                <text x="50%" y="46%" textAnchor="middle" fill="#6b6b9a" fontSize={11}>Total</text>
+                <text x="50%" y="56%" textAnchor="middle" fill="#e8e8ff" fontSize={15} fontWeight="bold">
+                  {formatUSDT(deptTotals.reduce((s, d) => s + d.value, 0), true)}
+                </text>
               </PieChart>
             </ResponsiveContainer>
             <div className="flex flex-wrap gap-2 mt-2">
@@ -171,7 +188,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Charts Row 2 */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-3 gap-4 mb-8">
         <Card className="col-span-2 rounded-xl border border-[#1e1e3a] bg-[#0f0f22]">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-[#6b6b9a]">Monthly Spend Trend</CardTitle>
@@ -233,7 +250,7 @@ export default function DashboardPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-[#1e1e3a] text-xs text-[#6b6b9a]">
+                <tr className="border-b border-[#1e1e3a] text-[10px] text-[#5a5a80] uppercase tracking-wider">
                   <th className="text-left py-2 font-medium">Date</th>
                   <th className="text-left py-2 font-medium">Department</th>
                   <th className="text-left py-2 font-medium">Applicant</th>
@@ -246,17 +263,17 @@ export default function DashboardPage() {
               <tbody>
                 {recentTxns.map((txn) => (
                   <tr key={txn.id} className="border-b border-[#1e1e3a] last:border-0 hover:bg-[rgba(153,151,255,0.06)]">
-                    <td className="py-2 text-[#6b6b9a]">{formatDate(txn.date)}</td>
-                    <td className="py-2 text-[#e8e8ff]">{DEPARTMENT_MAP[txn.department]?.name ?? txn.department}</td>
-                    <td className="py-2 text-[#6b6b9a]">{txn.applicant}</td>
-                    <td className="py-2 max-w-[200px] truncate text-[#e8e8ff]">{txn.description}</td>
-                    <td className="py-2">
+                    <td className="py-3 text-[#6b6b9a]">{formatDate(txn.date)}</td>
+                    <td className="py-3 text-[#e8e8ff]">{DEPARTMENT_MAP[txn.department]?.name ?? txn.department}</td>
+                    <td className="py-3 text-[#6b6b9a]">{txn.applicant}</td>
+                    <td className="py-3 max-w-[200px] truncate text-[#e8e8ff]">{txn.description}</td>
+                    <td className="py-3">
                       <Badge variant="outline" className="text-[10px] bg-[rgba(153,151,255,0.12)] text-[#ACAAFF] border-[#1e1e3a]">
                         {txn.type === "human-capital" ? "HC" : "GE"}
                       </Badge>
                     </td>
-                    <td className="py-2 text-right font-mono text-[#e8e8ff]">{formatUSDT(txn.amount)}</td>
-                    <td className="py-2">
+                    <td className="py-3 text-right font-mono text-[#e8e8ff]">{formatUSDT(txn.amount)}</td>
+                    <td className="py-3">
                       <Badge
                         variant={txn.flagged ? "destructive" : "secondary"}
                         className={`text-[10px] ${
@@ -287,14 +304,14 @@ function KPICard({
 }) {
   return (
     <Card className="rounded-xl border border-[#1e1e3a] bg-[#0f0f22]">
-      <CardContent className="pt-4 pb-4">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs text-[#6b6b9a] font-medium">{title}</span>
+      <CardContent className="p-6">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-[11px] uppercase tracking-wider text-[#6b6b9a] font-medium">{title}</span>
           <div className={`${bgColor} ${color} p-1.5 rounded-lg`}>{icon}</div>
         </div>
-        <p className="text-2xl font-bold text-[#e8e8ff]">{value}</p>
+        <p className="text-3xl font-bold text-[#e8e8ff] tracking-tight">{value}</p>
         {subtitle && (
-          <p className="text-xs text-[#6b6b9a] mt-1 flex items-center gap-1">
+          <p className="text-xs text-[#6b6b9a] mt-2 flex items-center gap-1">
             {subtitleTrend !== undefined && (
               subtitleTrend >= 0
                 ? <ArrowUpRight className="h-3 w-3 text-[#ff6b6b]" />

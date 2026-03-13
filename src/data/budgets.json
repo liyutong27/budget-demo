@@ -98,9 +98,9 @@
       "generalExpense": 8846.6
     },
     "feb-2026": {
-      "allocated": 32364.09,
-      "humanCapital": 22654.86,
-      "generalExpense": 9709.23
+      "allocated": 26000,
+      "humanCapital": 18200,
+      "generalExpense": 7800
     }
   },
   "operations": {
@@ -254,9 +254,9 @@
       "generalExpense": 12610.15
     },
     "feb-2026": {
-      "allocated": 62127.2,
-      "humanCapital": 43489.04,
-      "generalExpense": 18638.16
+      "allocated": 52000,
+      "humanCapital": 36400,
+      "generalExpense": 15600
     }
   }
 }

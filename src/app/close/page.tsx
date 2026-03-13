@@ -83,19 +83,19 @@ export default function ClosePage() {
       </PageHeader>
 
       {/* Progress Card */}
-      <div className="bg-[#0f0f22] border border-[#1e1e3a] rounded-xl p-4 mb-6">
+      <div className="bg-[#0f0f22] border border-[#1e1e3a] rounded-xl p-6 mb-8">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-[#e8e8ff]">
+          <span className="text-sm font-semibold text-[#e8e8ff]">
             Close Progress - {MONTH_LABELS[selectedMonth]}
           </span>
-          <span className="text-sm text-[#6b6b9a]">
+          <span className="text-[11px] text-[#6b6b9a]">
             {completedCount} of {totalChecks} completed ({progressPct.toFixed(0)}%)
           </span>
         </div>
         <div className="w-full h-3 bg-[#1e1e3a] rounded-full overflow-hidden">
           <div
-            className="h-full rounded-full transition-all duration-500"
-            style={{ width: `${progressPct}%`, backgroundColor: "#9997FF" }}
+            className="h-full bg-[#9997FF] rounded-full transition-all duration-500"
+            style={{ width: `${progressPct}%` }}
           />
         </div>
       </div>
@@ -126,44 +126,49 @@ export default function ClosePage() {
                 ? "bg-yellow-500/12 text-yellow-400 border border-yellow-500/20"
                 : "bg-[rgba(153,151,255,0.12)] text-[#ACAAFF] border border-[#1e1e3a]";
 
+            const borderLeftClass =
+              check.status === "completed"
+                ? "border-l-2 border-l-green-500/40"
+                : check.status === "in_progress"
+                ? "border-l-2 border-l-[#9997FF]/50"
+                : "";
+
             return (
               <div
                 key={check.id}
-                className={`bg-[#0f0f22] border border-[#1e1e3a] rounded-xl transition-all ${
+                className={`rounded-lg border border-[#1e1e3a] bg-[#0f0f22] p-4 transition-all hover:bg-[rgba(153,151,255,0.04)] ${borderLeftClass} ${
                   check.status === "completed" ? "opacity-70" : ""
                 } ${isLocked ? "opacity-50" : ""}`}
               >
-                <div className="p-4">
-                  <div className="flex items-start gap-4">
-                    <button
-                      onClick={() => !isLocked && toggleCheck(check.id)}
-                      disabled={isLocked || check.status === "completed"}
-                      className="mt-0.5 shrink-0"
-                    >
-                      {statusIcon}
-                    </button>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <h3 className={`text-sm font-medium ${check.status === "completed" ? "line-through text-[#6b6b9a]" : "text-[#e8e8ff]"}`}>
-                          Step {check.id}: {check.label}
-                        </h3>
-                        <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-medium ${badgeClasses}`}>
-                          {check.status === "completed" ? "Done" : check.status === "in_progress" ? "In Progress" : "Pending"}
+                <div className="flex items-start gap-4">
+                  <button
+                    onClick={() => !isLocked && toggleCheck(check.id)}
+                    disabled={isLocked || check.status === "completed"}
+                    className="mt-0.5 shrink-0"
+                  >
+                    {statusIcon}
+                  </button>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <h3 className={`text-sm font-semibold ${check.status === "completed" ? "line-through text-[#6b6b9a]" : "text-[#e8e8ff]"}`}>
+                        Step {check.id}: {check.label}
+                      </h3>
+                      <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-medium ${badgeClasses}`}>
+                        {check.status === "completed" ? "Done" : check.status === "in_progress" ? "In Progress" : "Pending"}
+                      </span>
+                    </div>
+                    <p className="text-[13px] text-[#6b6b9a] mt-1">{check.description}</p>
+                    <div className="flex items-center gap-4 mt-2 text-[11px] text-[#6b6b9a]">
+                      {check.assignee && (
+                        <span className="flex items-center gap-1">
+                          <User className="h-3 w-3" /> {check.assignee}
                         </span>
-                      </div>
-                      <p className="text-xs text-[#6b6b9a] mt-1">{check.description}</p>
-                      <div className="flex items-center gap-4 mt-2 text-[10px] text-[#6b6b9a]">
-                        {check.assignee && (
-                          <span className="flex items-center gap-1">
-                            <User className="h-3 w-3" /> {check.assignee}
-                          </span>
-                        )}
-                        {check.completedAt && (
-                          <span className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" /> {check.completedAt}
-                          </span>
-                        )}
-                      </div>
+                      )}
+                      {check.completedAt && (
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" /> {check.completedAt}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -175,13 +180,11 @@ export default function ClosePage() {
         {/* Side Panel */}
         <div className="space-y-4">
           {/* Pending Review Card */}
-          <div className="bg-[#0f0f22] border border-[#1e1e3a] rounded-xl">
-            <div className="p-4 pb-2">
-              <h3 className="text-sm font-medium text-[#e8e8ff]">
-                Pending Review ({pendingTxns.length})
-              </h3>
-            </div>
-            <div className="px-4 pb-4">
+          <div className="rounded-xl border border-[#1e1e3a] bg-[#0f0f22] p-5">
+            <h3 className="text-sm font-semibold text-[#e8e8ff] mb-3">
+              Pending Review ({pendingTxns.length})
+            </h3>
+            <div>
               {pendingTxns.length === 0 ? (
                 <p className="text-xs text-[#6b6b9a]">No pending transactions</p>
               ) : (
@@ -205,7 +208,7 @@ export default function ClosePage() {
                       </div>
                       <div className="flex items-center justify-between mt-1 text-[#6b6b9a]">
                         <span>{DEPARTMENT_MAP[txn.department]?.name ?? txn.department}</span>
-                        <span className="font-mono">{formatUSDT(txn.amount)}</span>
+                        <span className="font-mono text-right">{formatUSDT(txn.amount)}</span>
                       </div>
                     </div>
                   ))}
@@ -215,12 +218,9 @@ export default function ClosePage() {
           </div>
 
           {/* Department Sign-off Card */}
-          <div className="bg-[#0f0f22] border border-[#1e1e3a] rounded-xl">
-            <div className="p-4 pb-2">
-              <h3 className="text-sm font-medium text-[#e8e8ff]">Department Sign-off</h3>
-            </div>
-            <div className="px-4 pb-4">
-              <div className="space-y-2">
+          <div className="rounded-xl border border-[#1e1e3a] bg-[#0f0f22] p-5">
+            <h3 className="text-sm font-semibold text-[#e8e8ff] mb-3">Department Sign-off</h3>
+            <div className="space-y-2">
                 {DEPARTMENTS.map((dept) => (
                   <div key={dept.id} className="flex items-center justify-between text-xs">
                     <div className="flex items-center gap-2">
@@ -234,7 +234,6 @@ export default function ClosePage() {
                     <span className="text-[#6b6b9a]">{dept.lead}</span>
                   </div>
                 ))}
-              </div>
             </div>
           </div>
         </div>

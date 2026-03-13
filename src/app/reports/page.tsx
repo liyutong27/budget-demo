@@ -157,7 +157,7 @@ function PLStatement() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-[#1e1e3a] text-xs text-[#6b6b9a]">
+              <tr className="border-b border-[#1e1e3a] text-[10px] text-[#5a5a80] uppercase tracking-wider">
                 <th className="text-left py-2 font-medium w-64">Category</th>
                 {displayMonths.map((m) => (
                   <th key={m} className="text-right py-2 font-medium w-32">{MONTH_LABELS[m]}</th>
@@ -168,13 +168,13 @@ function PLStatement() {
             <tbody>
               {/* Revenue */}
               <tr className="border-b border-[#1e1e3a] bg-[rgba(153,151,255,0.03)]">
-                <td className="py-2 font-semibold text-[#e8e8ff]">Total Revenue</td>
+                <td className="py-3 font-semibold text-[#e8e8ff]">Total Revenue</td>
                 {displayMonths.map((m) => (
-                  <td key={m} className="py-2 text-right font-mono font-semibold text-[#e8e8ff]">
+                  <td key={m} className="py-3 text-right font-mono font-semibold text-[#e8e8ff]">
                     {formatUSDT(pl.totalRevenue?.[m] ?? 0)}
                   </td>
                 ))}
-                <td className="py-2 text-right font-mono font-semibold text-[#e8e8ff]">
+                <td className="py-3 text-right font-mono font-semibold text-[#e8e8ff]">
                   {formatUSDT(getYTD((m) => pl.totalRevenue?.[m] ?? 0))}
                 </td>
               </tr>
@@ -189,18 +189,18 @@ function PLStatement() {
                       className="border-b border-[#1e1e3a] bg-[rgba(153,151,255,0.03)] cursor-pointer hover:bg-[rgba(153,151,255,0.06)]"
                       onClick={() => toggleCategory(category.key)}
                     >
-                      <td className="py-2 font-semibold text-[#e8e8ff]">
+                      <td className="py-3 font-semibold text-[#e8e8ff]">
                         <div className="flex items-center gap-1">
                           {isExpanded ? <ChevronDown className="h-3 w-3 text-[#9997FF]" /> : <ChevronRight className="h-3 w-3 text-[#9997FF]" />}
                           {category.label}
                         </div>
                       </td>
                       {displayMonths.map((m) => (
-                        <td key={m} className="py-2 text-right font-mono font-semibold text-[#e8e8ff]">
+                        <td key={m} className="py-3 text-right font-mono font-semibold text-[#e8e8ff]">
                           {formatUSDT(getCategoryTotal(category.key, m))}
                         </td>
                       ))}
-                      <td className="py-2 text-right font-mono font-semibold text-[#e8e8ff]">
+                      <td className="py-3 text-right font-mono font-semibold text-[#e8e8ff]">
                         {formatUSDT(ytdTotal)}
                       </td>
                     </tr>
@@ -231,29 +231,29 @@ function PLStatement() {
 
               {/* Grand Total */}
               <tr className="border-t-2 border-[#1e1e3a] bg-[rgba(153,151,255,0.08)] font-bold">
-                <td className="py-2 text-[#e8e8ff]">TOTAL OPERATING EXPENSES</td>
+                <td className="py-3 text-[#e8e8ff]">TOTAL OPERATING EXPENSES</td>
                 {displayMonths.map((m) => (
-                  <td key={m} className="py-2 text-right font-mono text-[#e8e8ff]">
+                  <td key={m} className="py-3 text-right font-mono text-[#e8e8ff]">
                     {formatUSDT(getGrandTotal(m))}
                   </td>
                 ))}
-                <td className="py-2 text-right font-mono text-[#e8e8ff]">
+                <td className="py-3 text-right font-mono text-[#e8e8ff]">
                   {formatUSDT(getYTD((m) => getGrandTotal(m)))}
                 </td>
               </tr>
 
               {/* Net */}
               <tr className="bg-[rgba(153,151,255,0.05)] font-bold">
-                <td className="py-2 text-[#e8e8ff]">NET OPERATING INCOME</td>
+                <td className="py-3 text-[#e8e8ff]">NET OPERATING INCOME</td>
                 {displayMonths.map((m) => {
                   const net = pl.netOperatingIncome?.[m] ?? 0;
                   return (
-                    <td key={m} className={`py-2 text-right font-mono ${net < 0 ? "text-red-400" : "text-green-400"}`}>
+                    <td key={m} className={`py-3 text-right font-mono ${net < 0 ? "text-red-400" : "text-green-400"}`}>
                       {formatUSDT(net)}
                     </td>
                   );
                 })}
-                <td className={`py-2 text-right font-mono ${getYTD((m) => pl.netOperatingIncome?.[m] ?? 0) < 0 ? "text-red-400" : "text-green-400"}`}>
+                <td className={`py-3 text-right font-mono ${getYTD((m) => pl.netOperatingIncome?.[m] ?? 0) < 0 ? "text-red-400" : "text-green-400"}`}>
                   {formatUSDT(getYTD((m) => pl.netOperatingIncome?.[m] ?? 0))}
                 </td>
               </tr>
@@ -331,6 +331,10 @@ function DepartmentReports() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
+              <div className="flex items-center justify-between text-[10px] text-[#5a5a80] uppercase tracking-wider">
+                <span>Category</span>
+                <span>Amount</span>
+              </div>
               {categoryData.slice(0, 8).map((item) => (
                 <div key={item.category} className="space-y-1">
                   <div className="flex items-center justify-between text-sm">
@@ -401,26 +405,32 @@ function SlackIntegration() {
   const anomalies: AnomalyAlert[] = useMemo(() => {
     const monthTxns = transactions.filter((t) => t.month === month);
     const results: AnomalyAlert[] = [];
+    const seen = new Set<string>();
 
-    // High-value transactions > $5000
+    // High-value general expenses > $8000 (salaries excluded)
     monthTxns
-      .filter((t) => t.amount > 5000)
+      .filter((t) => t.amount > 8000 && t.type === "general-expense")
       .forEach((t) => {
-        results.push({
-          type: "high_value",
-          description: t.description,
-          amount: t.amount,
-          department: DEPARTMENTS.find((d) => d.id === t.department)?.name ?? t.department,
-          category: t.category,
-        });
+        const id = `${t.date}-${t.description}-${t.amount}`;
+        if (!seen.has(id)) {
+          seen.add(id);
+          results.push({
+            type: "high_value",
+            description: t.description,
+            amount: t.amount,
+            department: DEPARTMENTS.find((d) => d.id === t.department)?.name ?? t.department,
+            category: t.category,
+          });
+        }
       });
 
-    // Flagged items
+    // Flagged transactions (any type)
     monthTxns
       .filter((t) => t.flagged)
       .forEach((t) => {
-        // Avoid duplicating if already added as high_value
-        if (t.amount <= 5000) {
+        const id = `${t.date}-${t.description}-${t.amount}`;
+        if (!seen.has(id)) {
+          seen.add(id);
           results.push({
             type: "flagged",
             description: t.description,
@@ -429,9 +439,9 @@ function SlackIntegration() {
             category: t.category,
           });
         } else {
-          // Mark existing high_value entry as also flagged
+          // Already added as high_value, mark as flagged too
           const existing = results.find(
-            (r) => r.description === t.description && r.type === "high_value"
+            (r) => r.description === t.description && r.amount === t.amount
           );
           if (existing) existing.type = "flagged";
         }
@@ -719,7 +729,7 @@ function SlackIntegration() {
             <div className="space-y-2">
               <Label className="text-xs text-[#6b6b9a]">Alert Thresholds</Label>
               <p className="text-[10px] text-[#6b6b9a]">
-                Auto-alert when department utilization exceeds 90% (warning) or 100% (critical). Transactions &gt; $5,000 and flagged items are reported as anomalies.
+                Auto-alert when department utilization exceeds 90% (warning) or 100% (critical). General expenses &gt; $8,000 and flagged items are reported as anomalies. Salary payments are excluded.
               </p>
             </div>
             <div className="flex gap-2">
