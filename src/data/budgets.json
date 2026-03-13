@@ -1,0 +1,33 @@
+[
+  {"departmentId":"aws-infrastructure","month":"2025-12","allocated":500,"notes":"Minimal usage"},
+  {"departmentId":"aws-infrastructure","month":"2026-01","allocated":2500,"notes":"Scaling infra"},
+  {"departmentId":"aws-infrastructure","month":"2026-02","allocated":2500,"notes":""},
+
+  {"departmentId":"community","month":"2025-12","allocated":3000,"notes":""},
+  {"departmentId":"community","month":"2026-01","allocated":3500,"notes":"Event planned"},
+  {"departmentId":"community","month":"2026-02","allocated":3500,"notes":""},
+
+  {"departmentId":"credit-card-subscription","month":"2025-12","allocated":18000,"notes":"Include SaaS tools"},
+  {"departmentId":"credit-card-subscription","month":"2026-01","allocated":50000,"notes":"Major tool migration"},
+  {"departmentId":"credit-card-subscription","month":"2026-02","allocated":40000,"notes":"Stabilizing"},
+
+  {"departmentId":"design","month":"2025-12","allocated":3500,"notes":""},
+  {"departmentId":"design","month":"2026-01","allocated":1000,"notes":"Reduced scope"},
+  {"departmentId":"design","month":"2026-02","allocated":1000,"notes":""},
+
+  {"departmentId":"gtm","month":"2025-12","allocated":2500,"notes":""},
+  {"departmentId":"gtm","month":"2026-01","allocated":500,"notes":"Pause marketing"},
+  {"departmentId":"gtm","month":"2026-02","allocated":4500,"notes":"New campaign"},
+
+  {"departmentId":"internal-operation","month":"2025-12","allocated":35000,"notes":"Legal + Reimbursement"},
+  {"departmentId":"internal-operation","month":"2026-01","allocated":26000,"notes":"Legal costs"},
+  {"departmentId":"internal-operation","month":"2026-02","allocated":3000,"notes":"Normalized"},
+
+  {"departmentId":"product","month":"2025-12","allocated":500,"notes":""},
+  {"departmentId":"product","month":"2026-01","allocated":500,"notes":""},
+  {"departmentId":"product","month":"2026-02","allocated":500,"notes":""},
+
+  {"departmentId":"tech","month":"2025-12","allocated":4000,"notes":""},
+  {"departmentId":"tech","month":"2026-01","allocated":1500,"notes":""},
+  {"departmentId":"tech","month":"2026-02","allocated":16000,"notes":"New hires + equipment"}
+]
