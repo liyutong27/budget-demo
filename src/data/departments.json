@@ -2,13 +2,13 @@
   {
     "id": "tech",
     "name": "Tech",
-    "color": "#3b82f6",
-    "lead": "Wenzhang Jian"
+    "color": "#9997FF",
+    "lead": "Jack"
   },
   {
     "id": "gtm",
     "name": "GTM",
-    "color": "#8b5cf6",
+    "color": "#ACAAFF",
     "lead": "Ruqi Hu"
   },
   {
@@ -20,19 +20,13 @@
   {
     "id": "product",
     "name": "Product",
-    "color": "#f97316",
-    "lead": "Wang Chenyu"
+    "color": "#437CFF",
+    "lead": "Justin"
   },
   {
     "id": "operations",
     "name": "Operations",
-    "color": "#14b8a6",
+    "color": "#22c55e",
     "lead": "Yutong Li"
-  },
-  {
-    "id": "community",
-    "name": "Community",
-    "color": "#eab308",
-    "lead": "Javier"
   }
 ]

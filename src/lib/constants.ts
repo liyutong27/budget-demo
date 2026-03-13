@@ -28,12 +28,12 @@ export const DEPARTMENT_MAP: Record<string, Department> = Object.fromEntries(
 );
 
 export const CHART_COLORS = {
-  budget: "#3b82f6",
-  actual: "#10b981",
+  budget: "#9997FF",
+  actual: "#22c55e",
   over: "#ef4444",
-  warning: "#f59e0b",
+  warning: "#eab308",
   usdt: "#26a17b",
-  muted: "#94a3b8",
+  muted: "#6b6b9a",
 };
 
 export const CLOSE_CHECKS_TEMPLATE = [

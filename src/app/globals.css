@@ -4,25 +4,26 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    /* Donut dark theme */
+    --background: 240 47% 5%;       /* #070712 */
+    --foreground: 240 100% 95%;     /* #e8e8ff */
+    --card: 240 40% 10%;            /* #0f0f22 */
+    --card-foreground: 240 100% 95%;
+    --popover: 240 40% 10%;
+    --popover-foreground: 240 100% 95%;
+    --primary: 241 100% 80%;        /* #9997FF */
+    --primary-foreground: 240 47% 5%;
+    --secondary: 240 30% 14%;       /* slightly lighter surface */
+    --secondary-foreground: 240 100% 95%;
+    --muted: 240 30% 14%;
+    --muted-foreground: 240 20% 56%;  /* #6b6b9a */
+    --accent: 241 100% 80%;
+    --accent-foreground: 240 47% 5%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 240 100% 95%;
+    --border: 240 35% 17%;          /* #1e1e3a */
+    --input: 240 35% 17%;
+    --ring: 241 100% 80%;
     --radius: 0.5rem;
   }
 
@@ -32,5 +33,9 @@
 
   body {
     @apply bg-background text-foreground;
+    background-image:
+      radial-gradient(ellipse 80% 55% at 10% 0%, rgba(67,124,255,0.15) 0%, rgba(91,106,253,0.08) 40%, transparent 65%),
+      radial-gradient(ellipse 60% 50% at 85% 95%, rgba(72,0,251,0.15) 0%, rgba(153,151,255,0.06) 44%, transparent 65%);
+    background-attachment: fixed;
   }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ import {
 } from "recharts";
 import {
   Download, Send, TestTube2, ChevronDown, ChevronRight, FileText, MessageSquare,
+  AlertTriangle, AlertCircle, Flag,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -148,15 +149,15 @@ function PLStatement() {
   }
 
   return (
-    <Card>
+    <Card className="bg-[#0f0f22] border border-[#1e1e3a]">
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium">Profit & Loss Statement (USDT)</CardTitle>
+        <CardTitle className="text-sm font-medium text-[#e8e8ff]">Profit & Loss Statement (USDT)</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b text-xs text-muted-foreground">
+              <tr className="border-b border-[#1e1e3a] text-xs text-[#6b6b9a]">
                 <th className="text-left py-2 font-medium w-64">Category</th>
                 {displayMonths.map((m) => (
                   <th key={m} className="text-right py-2 font-medium w-32">{MONTH_LABELS[m]}</th>
@@ -166,14 +167,14 @@ function PLStatement() {
             </thead>
             <tbody>
               {/* Revenue */}
-              <tr className="border-b bg-muted/30">
-                <td className="py-2 font-semibold">Total Revenue</td>
+              <tr className="border-b border-[#1e1e3a] bg-[rgba(153,151,255,0.03)]">
+                <td className="py-2 font-semibold text-[#e8e8ff]">Total Revenue</td>
                 {displayMonths.map((m) => (
-                  <td key={m} className="py-2 text-right font-mono font-semibold">
+                  <td key={m} className="py-2 text-right font-mono font-semibold text-[#e8e8ff]">
                     {formatUSDT(pl.totalRevenue?.[m] ?? 0)}
                   </td>
                 ))}
-                <td className="py-2 text-right font-mono font-semibold">
+                <td className="py-2 text-right font-mono font-semibold text-[#e8e8ff]">
                   {formatUSDT(getYTD((m) => pl.totalRevenue?.[m] ?? 0))}
                 </td>
               </tr>
@@ -185,21 +186,21 @@ function PLStatement() {
                 return (
                   <React.Fragment key={category.key}>
                     <tr
-                      className="border-b bg-muted/30 cursor-pointer hover:bg-muted/50"
+                      className="border-b border-[#1e1e3a] bg-[rgba(153,151,255,0.03)] cursor-pointer hover:bg-[rgba(153,151,255,0.06)]"
                       onClick={() => toggleCategory(category.key)}
                     >
-                      <td className="py-2 font-semibold">
+                      <td className="py-2 font-semibold text-[#e8e8ff]">
                         <div className="flex items-center gap-1">
-                          {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                          {isExpanded ? <ChevronDown className="h-3 w-3 text-[#9997FF]" /> : <ChevronRight className="h-3 w-3 text-[#9997FF]" />}
                           {category.label}
                         </div>
                       </td>
                       {displayMonths.map((m) => (
-                        <td key={m} className="py-2 text-right font-mono font-semibold">
+                        <td key={m} className="py-2 text-right font-mono font-semibold text-[#e8e8ff]">
                           {formatUSDT(getCategoryTotal(category.key, m))}
                         </td>
                       ))}
-                      <td className="py-2 text-right font-mono font-semibold">
+                      <td className="py-2 text-right font-mono font-semibold text-[#e8e8ff]">
                         {formatUSDT(ytdTotal)}
                       </td>
                     </tr>
@@ -208,17 +209,17 @@ function PLStatement() {
                         const subYtd = getYTD((m) => getSubcategoryValue(category.key, sub.key, m));
                         if (subYtd === 0) return null;
                         return (
-                          <tr key={sub.key} className="border-b hover:bg-muted/30">
-                            <td className="py-1.5 pl-8 text-muted-foreground">{sub.label}</td>
+                          <tr key={sub.key} className="border-b border-[#1e1e3a] hover:bg-[rgba(153,151,255,0.06)]">
+                            <td className="py-1.5 pl-8 text-[#6b6b9a]">{sub.label}</td>
                             {displayMonths.map((m) => {
                               const val = getSubcategoryValue(category.key, sub.key, m);
                               return (
-                                <td key={m} className="py-1.5 text-right font-mono text-muted-foreground">
+                                <td key={m} className="py-1.5 text-right font-mono text-[#6b6b9a]">
                                   {val > 0 ? formatUSDT(val) : "-"}
                                 </td>
                               );
                             })}
-                            <td className="py-1.5 text-right font-mono text-muted-foreground">
+                            <td className="py-1.5 text-right font-mono text-[#6b6b9a]">
                               {formatUSDT(subYtd)}
                             </td>
                           </tr>
@@ -229,30 +230,30 @@ function PLStatement() {
               })}
 
               {/* Grand Total */}
-              <tr className="border-t-2 bg-slate-100 font-bold">
-                <td className="py-2">TOTAL OPERATING EXPENSES</td>
+              <tr className="border-t-2 border-[#1e1e3a] bg-[rgba(153,151,255,0.08)] font-bold">
+                <td className="py-2 text-[#e8e8ff]">TOTAL OPERATING EXPENSES</td>
                 {displayMonths.map((m) => (
-                  <td key={m} className="py-2 text-right font-mono">
+                  <td key={m} className="py-2 text-right font-mono text-[#e8e8ff]">
                     {formatUSDT(getGrandTotal(m))}
                   </td>
                 ))}
-                <td className="py-2 text-right font-mono">
+                <td className="py-2 text-right font-mono text-[#e8e8ff]">
                   {formatUSDT(getYTD((m) => getGrandTotal(m)))}
                 </td>
               </tr>
 
               {/* Net */}
-              <tr className="bg-slate-50 font-bold">
-                <td className="py-2">NET OPERATING INCOME</td>
+              <tr className="bg-[rgba(153,151,255,0.05)] font-bold">
+                <td className="py-2 text-[#e8e8ff]">NET OPERATING INCOME</td>
                 {displayMonths.map((m) => {
                   const net = pl.netOperatingIncome?.[m] ?? 0;
                   return (
-                    <td key={m} className={`py-2 text-right font-mono ${net < 0 ? "text-red-600" : "text-green-600"}`}>
+                    <td key={m} className={`py-2 text-right font-mono ${net < 0 ? "text-red-400" : "text-green-400"}`}>
                       {formatUSDT(net)}
                     </td>
                   );
                 })}
-                <td className={`py-2 text-right font-mono ${getYTD((m) => pl.netOperatingIncome?.[m] ?? 0) < 0 ? "text-red-600" : "text-green-600"}`}>
+                <td className={`py-2 text-right font-mono ${getYTD((m) => pl.netOperatingIncome?.[m] ?? 0) < 0 ? "text-red-400" : "text-green-400"}`}>
                   {formatUSDT(getYTD((m) => pl.netOperatingIncome?.[m] ?? 0))}
                 </td>
               </tr>
@@ -288,31 +289,35 @@ function DepartmentReports() {
     <div className="space-y-4">
       <div className="flex items-center gap-4">
         <Select value={selectedDept} onValueChange={setSelectedDept}>
-          <SelectTrigger className="w-64">
+          <SelectTrigger className="w-64 bg-[#0f0f22] border-[#1e1e3a] text-[#e8e8ff]">
             <SelectValue />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-[#0f0f22] border-[#1e1e3a]">
             {DEPARTMENTS.map((d) => (
-              <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+              <SelectItem key={d.id} value={d.id} className="text-[#e8e8ff]">{d.name}</SelectItem>
             ))}
           </SelectContent>
         </Select>
-        <Badge variant="outline" className="text-xs">Lead: {dept.lead}</Badge>
+        <Badge variant="outline" className="text-xs border-[#1e1e3a] text-[#6b6b9a]">Lead: {dept.lead}</Badge>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <Card>
+        <Card className="bg-[#0f0f22] border border-[#1e1e3a]">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Budget vs Actuals</CardTitle>
+            <CardTitle className="text-sm font-medium text-[#e8e8ff]">Budget vs Actuals</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={280}>
               <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `$${(Number(v) / 1000).toFixed(0)}K`} />
-                <Tooltip formatter={(v) => formatUSDT(Number(v))} />
-                <Legend />
+                <CartesianGrid strokeDasharray="3 3" stroke="#1e1e3a" />
+                <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#6b6b9a" }} stroke="#1e1e3a" />
+                <YAxis tick={{ fontSize: 11, fill: "#6b6b9a" }} stroke="#1e1e3a" tickFormatter={(v) => `$${(Number(v) / 1000).toFixed(0)}K`} />
+                <Tooltip
+                  formatter={(v) => formatUSDT(Number(v))}
+                  contentStyle={{ backgroundColor: "#0f0f22", border: "1px solid #1e1e3a", color: "#e8e8ff" }}
+                  labelStyle={{ color: "#6b6b9a" }}
+                />
+                <Legend wrapperStyle={{ color: "#6b6b9a" }} />
                 <Bar dataKey="budget" name="Budget" fill={CHART_COLORS.budget} radius={[4, 4, 0, 0]} />
                 <Bar dataKey="actual" name="Actual" fill={CHART_COLORS.actual} radius={[4, 4, 0, 0]} />
               </BarChart>
@@ -320,17 +325,17 @@ function DepartmentReports() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-[#0f0f22] border border-[#1e1e3a]">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Category Breakdown</CardTitle>
+            <CardTitle className="text-sm font-medium text-[#e8e8ff]">Category Breakdown</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               {categoryData.slice(0, 8).map((item) => (
                 <div key={item.category} className="space-y-1">
                   <div className="flex items-center justify-between text-sm">
-                    <span>{item.category}</span>
-                    <span className="font-mono">{formatUSDT(item.total)}</span>
+                    <span className="text-[#e8e8ff]">{item.category}</span>
+                    <span className="font-mono text-[#6b6b9a]">{formatUSDT(item.total)}</span>
                   </div>
                   <Progress
                     value={
@@ -350,16 +355,267 @@ function DepartmentReports() {
   );
 }
 
+interface DeptAlert {
+  departmentName: string;
+  departmentId: string;
+  allocated: number;
+  actual: number;
+  utilization: number;
+  status: "over" | "near" | "on-track";
+}
+
+interface AnomalyAlert {
+  type: "high_value" | "flagged";
+  description: string;
+  amount: number;
+  department: string;
+  category: string;
+}
+
 function SlackIntegration() {
   const [webhookUrl, setWebhookUrl] = useState("");
   const [channel, setChannel] = useState("#finance");
-  const [reportType, setReportType] = useState("monthly_summary");
+  const [reportType, setReportType] = useState("budget_alerts");
   const [sending, setSending] = useState(false);
 
   const month: Month = "feb-2026";
   const kpi = calculateKPISummary(budgets, actuals, transactions, month, "jan-2026");
   const bva = calculateBudgetVsActual(budgets, actuals, month);
-  const preview = buildSlackMessage(reportType, kpi, bva, MONTH_LABELS[month]);
+
+  // Build department alerts
+  const deptAlerts: DeptAlert[] = useMemo(() => {
+    return bva
+      .filter((d) => d.allocated > 0 || d.actual > 0)
+      .map((d) => ({
+        departmentName: d.departmentName,
+        departmentId: d.departmentId,
+        allocated: d.allocated,
+        actual: d.actual,
+        utilization: d.utilization,
+        status: d.utilization > 100 ? "over" as const : d.utilization > 90 ? "near" as const : "on-track" as const,
+      }))
+      .sort((a, b) => b.utilization - a.utilization);
+  }, [bva]);
+
+  // Detect anomalous expenses
+  const anomalies: AnomalyAlert[] = useMemo(() => {
+    const monthTxns = transactions.filter((t) => t.month === month);
+    const results: AnomalyAlert[] = [];
+
+    // High-value transactions > $5000
+    monthTxns
+      .filter((t) => t.amount > 5000)
+      .forEach((t) => {
+        results.push({
+          type: "high_value",
+          description: t.description,
+          amount: t.amount,
+          department: DEPARTMENTS.find((d) => d.id === t.department)?.name ?? t.department,
+          category: t.category,
+        });
+      });
+
+    // Flagged items
+    monthTxns
+      .filter((t) => t.flagged)
+      .forEach((t) => {
+        // Avoid duplicating if already added as high_value
+        if (t.amount <= 5000) {
+          results.push({
+            type: "flagged",
+            description: t.description,
+            amount: t.amount,
+            department: DEPARTMENTS.find((d) => d.id === t.department)?.name ?? t.department,
+            category: t.category,
+          });
+        } else {
+          // Mark existing high_value entry as also flagged
+          const existing = results.find(
+            (r) => r.description === t.description && r.type === "high_value"
+          );
+          if (existing) existing.type = "flagged";
+        }
+      });
+
+    return results.sort((a, b) => b.amount - a.amount);
+  }, [month]);
+
+  // Build preview blocks for the Slack-style message
+  const previewBlocks = useMemo(() => {
+    const blocks: { type: string; content: string; style?: string }[] = [];
+
+    if (reportType === "budget_alerts") {
+      blocks.push({ type: "header", content: `Budget Alerts - ${MONTH_LABELS[month]}` });
+      blocks.push({ type: "divider", content: "" });
+
+      deptAlerts.forEach((d) => {
+        const compactActual = `$${Math.round(d.actual / 1000)}K`;
+        const compactBudget = `$${Math.round(d.allocated / 1000)}K`;
+        if (d.status === "over") {
+          const overBy = `$${Math.round((d.actual - d.allocated) / 1000)}K`;
+          blocks.push({
+            type: "alert",
+            content: `${d.departmentName} exceeded budget by ${overBy} (${d.utilization.toFixed(0)}% utilization)`,
+            style: "critical",
+          });
+        } else if (d.status === "near") {
+          blocks.push({
+            type: "alert",
+            content: `${d.departmentName} is at ${d.utilization.toFixed(0)}% budget utilization (${compactActual} / ${compactBudget})`,
+            style: "warning",
+          });
+        } else {
+          blocks.push({
+            type: "alert",
+            content: `${d.departmentName} on track at ${d.utilization.toFixed(0)}% (${compactActual} / ${compactBudget})`,
+            style: "ok",
+          });
+        }
+      });
+
+      if (anomalies.length > 0) {
+        blocks.push({ type: "divider", content: "" });
+        blocks.push({ type: "subheader", content: "Anomalous Transactions" });
+        anomalies.slice(0, 5).forEach((a) => {
+          blocks.push({
+            type: "flagged",
+            content: `$${a.amount.toLocaleString()} ${a.category} - ${a.department}`,
+            style: a.type === "flagged" ? "flagged" : "high_value",
+          });
+        });
+      }
+    } else if (reportType === "anomaly_report") {
+      blocks.push({ type: "header", content: `Anomaly Report - ${MONTH_LABELS[month]}` });
+      blocks.push({ type: "divider", content: "" });
+
+      if (anomalies.length === 0) {
+        blocks.push({ type: "text", content: "No anomalies detected this period." });
+      } else {
+        anomalies.forEach((a) => {
+          blocks.push({
+            type: "flagged",
+            content: `$${a.amount.toLocaleString()} ${a.category} - ${a.department}`,
+            style: a.type === "flagged" ? "flagged" : "high_value",
+          });
+          blocks.push({
+            type: "text",
+            content: a.description,
+          });
+        });
+      }
+    } else {
+      // full_summary - use existing buildSlackMessage
+      blocks.push({ type: "header", content: `Full Summary - ${MONTH_LABELS[month]}` });
+      blocks.push({ type: "divider", content: "" });
+      blocks.push({
+        type: "text",
+        content: `Total Budget: $${kpi.totalBudget.toLocaleString()} | Spend: $${kpi.totalSpend.toLocaleString()} | Utilization: ${kpi.utilization.toFixed(1)}% | Flagged: ${kpi.flaggedCount}`,
+      });
+      blocks.push({ type: "divider", content: "" });
+      deptAlerts.forEach((d) => {
+        const compactActual = `$${Math.round(d.actual / 1000)}K`;
+        const compactBudget = `$${Math.round(d.allocated / 1000)}K`;
+        blocks.push({
+          type: "text",
+          content: `${d.departmentName}: ${compactActual} / ${compactBudget} (${d.utilization.toFixed(0)}%)`,
+        });
+      });
+    }
+
+    blocks.push({ type: "divider", content: "" });
+    blocks.push({ type: "context", content: `Generated by Budget Dashboard | ${new Date().toLocaleString()}` });
+
+    return blocks;
+  }, [reportType, deptAlerts, anomalies, kpi, month]);
+
+  // Build Slack API-format message for sending
+  function buildAlertSlackPayload() {
+    if (reportType === "full_summary") {
+      return buildSlackMessage(reportType, kpi, bva, MONTH_LABELS[month]);
+    }
+
+    const slackBlocks: Record<string, unknown>[] = [
+      {
+        type: "header",
+        text: {
+          type: "plain_text",
+          text: reportType === "budget_alerts"
+            ? `Budget Alerts - ${MONTH_LABELS[month]}`
+            : `Anomaly Report - ${MONTH_LABELS[month]}`,
+        },
+      },
+      { type: "divider" },
+    ];
+
+    if (reportType === "budget_alerts") {
+      deptAlerts.forEach((d) => {
+        const compactActual = `$${Math.round(d.actual / 1000)}K`;
+        const compactBudget = `$${Math.round(d.allocated / 1000)}K`;
+        let emoji = ":white_check_mark:";
+        let text = "";
+        if (d.status === "over") {
+          const overBy = `$${Math.round((d.actual - d.allocated) / 1000)}K`;
+          emoji = ":rotating_light:";
+          text = `*${d.departmentName}* exceeded budget by ${overBy} (${d.utilization.toFixed(0)}% utilization)`;
+        } else if (d.status === "near") {
+          emoji = ":warning:";
+          text = `*${d.departmentName}* is at ${d.utilization.toFixed(0)}% budget utilization (${compactActual} / ${compactBudget})`;
+        } else {
+          text = `*${d.departmentName}* on track at ${d.utilization.toFixed(0)}% (${compactActual} / ${compactBudget})`;
+        }
+        slackBlocks.push({
+          type: "section",
+          text: { type: "mrkdwn", text: `${emoji} ${text}` },
+        });
+      });
+
+      if (anomalies.length > 0) {
+        slackBlocks.push({ type: "divider" });
+        slackBlocks.push({
+          type: "section",
+          text: { type: "mrkdwn", text: "*Anomalous Transactions*" },
+        });
+        anomalies.slice(0, 5).forEach((a) => {
+          const emoji = a.type === "flagged" ? ":red_circle:" : ":large_orange_circle:";
+          slackBlocks.push({
+            type: "section",
+            text: {
+              type: "mrkdwn",
+              text: `${emoji} *Flagged:* $${a.amount.toLocaleString()} ${a.category} - ${a.department}`,
+            },
+          });
+        });
+      }
+    } else {
+      // anomaly_report
+      if (anomalies.length === 0) {
+        slackBlocks.push({
+          type: "section",
+          text: { type: "mrkdwn", text: ":white_check_mark: No anomalies detected this period." },
+        });
+      } else {
+        anomalies.forEach((a) => {
+          const emoji = a.type === "flagged" ? ":red_circle:" : ":large_orange_circle:";
+          slackBlocks.push({
+            type: "section",
+            text: {
+              type: "mrkdwn",
+              text: `${emoji} *$${a.amount.toLocaleString()}* ${a.category} - ${a.department}\n${a.description}`,
+            },
+          });
+        });
+      }
+    }
+
+    slackBlocks.push({
+      type: "context",
+      elements: [
+        { type: "mrkdwn", text: `Generated by Budget Dashboard | ${new Date().toLocaleString()}` },
+      ],
+    });
+
+    return { blocks: slackBlocks };
+  }
 
   async function sendReport() {
     if (!webhookUrl) {
@@ -368,10 +624,11 @@ function SlackIntegration() {
     }
     setSending(true);
     try {
+      const payload = buildAlertSlackPayload();
       const res = await fetch("/api/slack", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ webhookUrl, message: preview }),
+        body: JSON.stringify({ webhookUrl, message: payload }),
       });
       const data = await res.json();
       if (data.ok) {
@@ -414,97 +671,178 @@ function SlackIntegration() {
     setSending(false);
   }
 
+  const overCount = deptAlerts.filter((d) => d.status === "over").length;
+  const nearCount = deptAlerts.filter((d) => d.status === "near").length;
+
   return (
     <div className="grid grid-cols-2 gap-4">
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <MessageSquare className="h-4 w-4" /> Slack Report Agent
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label className="text-xs">Webhook URL</Label>
-            <Input
-              type="password"
-              placeholder="https://hooks.slack.com/services/..."
-              value={webhookUrl}
-              onChange={(e) => setWebhookUrl(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-xs">Channel</Label>
-            <Input value={channel} onChange={(e) => setChannel(e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-xs">Report Type</Label>
-            <Select value={reportType} onValueChange={setReportType}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="monthly_summary">Monthly Summary</SelectItem>
-                <SelectItem value="budget_alert">Budget Alert</SelectItem>
-                <SelectItem value="pl_statement">P&L Statement</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label className="text-xs">Alert Thresholds</Label>
-            <p className="text-[10px] text-muted-foreground">
-              Auto-alert when department utilization exceeds 90% (warning) or 100% (critical)
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={testConnection} disabled={sending}>
-              <TestTube2 className="h-3 w-3 mr-1" /> Test Connection
-            </Button>
-            <Button size="sm" onClick={sendReport} disabled={sending}>
-              <Send className="h-3 w-3 mr-1" /> Send Report
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        {/* Config Card */}
+        <Card className="bg-[#0f0f22] border border-[#1e1e3a]">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-[#e8e8ff] flex items-center gap-2">
+              <MessageSquare className="h-4 w-4 text-[#9997FF]" /> Slack Alert Agent
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-xs text-[#6b6b9a]">Webhook URL</Label>
+              <Input
+                type="password"
+                placeholder="https://hooks.slack.com/services/..."
+                value={webhookUrl}
+                onChange={(e) => setWebhookUrl(e.target.value)}
+                className="bg-[#0a0a1a] border-[#1e1e3a] text-[#e8e8ff] placeholder:text-[#3a3a5c]"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs text-[#6b6b9a]">Channel</Label>
+              <Input
+                value={channel}
+                onChange={(e) => setChannel(e.target.value)}
+                className="bg-[#0a0a1a] border-[#1e1e3a] text-[#e8e8ff]"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs text-[#6b6b9a]">Report Type</Label>
+              <Select value={reportType} onValueChange={setReportType}>
+                <SelectTrigger className="bg-[#0a0a1a] border-[#1e1e3a] text-[#e8e8ff]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-[#0f0f22] border-[#1e1e3a]">
+                  <SelectItem value="budget_alerts" className="text-[#e8e8ff]">Budget Alerts</SelectItem>
+                  <SelectItem value="anomaly_report" className="text-[#e8e8ff]">Anomaly Report</SelectItem>
+                  <SelectItem value="full_summary" className="text-[#e8e8ff]">Full Summary</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs text-[#6b6b9a]">Alert Thresholds</Label>
+              <p className="text-[10px] text-[#6b6b9a]">
+                Auto-alert when department utilization exceeds 90% (warning) or 100% (critical). Transactions &gt; $5,000 and flagged items are reported as anomalies.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={testConnection} disabled={sending} className="border-[#1e1e3a] text-[#e8e8ff] hover:bg-[rgba(153,151,255,0.06)]">
+                <TestTube2 className="h-3 w-3 mr-1" /> Test Connection
+              </Button>
+              <Button size="sm" onClick={sendReport} disabled={sending} className="bg-[#9997FF] text-white hover:bg-[#8886ee]">
+                <Send className="h-3 w-3 mr-1" /> Send Report
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
-      <Card>
+        {/* Department Status Overview */}
+        <Card className="bg-[#0f0f22] border border-[#1e1e3a]">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-[#e8e8ff] flex items-center gap-2">
+              Department Status
+              {overCount > 0 && (
+                <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-[10px]">
+                  {overCount} over
+                </Badge>
+              )}
+              {nearCount > 0 && (
+                <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-[10px]">
+                  {nearCount} near limit
+                </Badge>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {deptAlerts.map((d) => (
+                <div
+                  key={d.departmentId}
+                  className="flex items-center justify-between py-1.5 px-2 rounded text-xs hover:bg-[rgba(153,151,255,0.06)]"
+                >
+                  <div className="flex items-center gap-2">
+                    {d.status === "over" && <AlertCircle className="h-3.5 w-3.5 text-red-400" />}
+                    {d.status === "near" && <AlertTriangle className="h-3.5 w-3.5 text-yellow-400" />}
+                    {d.status === "on-track" && <div className="h-3.5 w-3.5 rounded-full bg-green-500/60" />}
+                    <span className="text-[#e8e8ff]">{d.departmentName}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="font-mono text-[#6b6b9a]">
+                      ${Math.round(d.actual / 1000)}K / ${Math.round(d.allocated / 1000)}K
+                    </span>
+                    <span className={`font-mono font-medium ${
+                      d.status === "over" ? "text-red-400" : d.status === "near" ? "text-yellow-400" : "text-green-400"
+                    }`}>
+                      {d.utilization.toFixed(0)}%
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Slack Preview */}
+      <Card className="bg-[#0f0f22] border border-[#1e1e3a]">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium">Message Preview</CardTitle>
+          <CardTitle className="text-sm font-medium text-[#e8e8ff]">Message Preview</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="bg-slate-900 text-white rounded-lg p-4 text-xs font-mono space-y-3 max-h-[400px] overflow-y-auto">
-            {preview.blocks.map((block: any, i: number) => {
+          <div className="bg-slate-900 text-white rounded-lg p-4 text-xs font-mono space-y-2.5 max-h-[500px] overflow-y-auto">
+            {previewBlocks.map((block, i) => {
               if (block.type === "header") {
                 return (
-                  <div key={i} className="text-sm font-bold border-b border-slate-700 pb-2">
-                    {block.text.text}
+                  <div key={i} className="text-sm font-bold border-b border-slate-700 pb-2 text-white">
+                    {block.content}
                   </div>
                 );
               }
-              if (block.type === "section" && block.fields) {
+              if (block.type === "subheader") {
                 return (
-                  <div key={i} className="grid grid-cols-2 gap-2">
-                    {block.fields.map((f: any, j: number) => (
-                      <div key={j} className="text-slate-300">
-                        {f.text.replace(/\*/g, "")}
-                      </div>
-                    ))}
-                  </div>
-                );
-              }
-              if (block.type === "section" && block.text) {
-                return (
-                  <div key={i} className="whitespace-pre-wrap text-slate-300">
-                    {block.text.text.replace(/\*/g, "")}
+                  <div key={i} className="text-xs font-bold text-slate-300 pt-1">
+                    {block.content}
                   </div>
                 );
               }
               if (block.type === "divider") {
                 return <hr key={i} className="border-slate-700" />;
               }
+              if (block.type === "alert") {
+                let icon = "";
+                let textColor = "text-slate-300";
+                if (block.style === "critical") {
+                  icon = "\uD83D\uDEA8";
+                  textColor = "text-red-400";
+                } else if (block.style === "warning") {
+                  icon = "\u26A0\uFE0F";
+                  textColor = "text-yellow-300";
+                } else {
+                  icon = "\u2705";
+                  textColor = "text-green-400";
+                }
+                return (
+                  <div key={i} className={`${textColor} py-0.5`}>
+                    {icon} {block.content}
+                  </div>
+                );
+              }
+              if (block.type === "flagged") {
+                const icon = block.style === "flagged" ? "\uD83D\uDD34" : "\uD83D\uDFE0";
+                return (
+                  <div key={i} className="text-red-300 py-0.5">
+                    {icon} Flagged: {block.content}
+                  </div>
+                );
+              }
+              if (block.type === "text") {
+                return (
+                  <div key={i} className="text-slate-300 whitespace-pre-wrap">
+                    {block.content}
+                  </div>
+                );
+              }
               if (block.type === "context") {
                 return (
                   <div key={i} className="text-[10px] text-slate-500">
-                    {block.elements[0]?.text}
+                    {block.content}
                   </div>
                 );
               }
@@ -565,14 +903,14 @@ function ExportSection() {
         { type: "transactions", title: "Transaction Detail", desc: "All transactions with full details" },
         { type: "pl", title: "P&L Statement", desc: "Monthly profit & loss breakdown" },
       ].map((item) => (
-        <Card key={item.type}>
+        <Card key={item.type} className="bg-[#0f0f22] border border-[#1e1e3a]">
           <CardContent className="py-6 text-center space-y-3">
-            <FileText className="h-8 w-8 mx-auto text-muted-foreground" />
+            <FileText className="h-8 w-8 mx-auto text-[#6b6b9a]" />
             <div>
-              <h3 className="text-sm font-medium">{item.title}</h3>
-              <p className="text-xs text-muted-foreground">{item.desc}</p>
+              <h3 className="text-sm font-medium text-[#e8e8ff]">{item.title}</h3>
+              <p className="text-xs text-[#6b6b9a]">{item.desc}</p>
             </div>
-            <Button variant="outline" size="sm" onClick={() => exportCSV(item.type)}>
+            <Button variant="outline" size="sm" onClick={() => exportCSV(item.type)} className="border-[#1e1e3a] text-[#e8e8ff] hover:bg-[rgba(153,151,255,0.06)]">
               <Download className="h-3 w-3 mr-1" /> Download CSV
             </Button>
           </CardContent>

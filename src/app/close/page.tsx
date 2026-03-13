@@ -2,11 +2,6 @@
 
 import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatUSDT } from "@/lib/format";
 import { MONTH_LABELS, DEPARTMENTS, DEPARTMENT_MAP } from "@/lib/constants";
 import { Month, CloseMonth, Transaction } from "@/lib/types";
@@ -63,43 +58,50 @@ export default function ClosePage() {
   return (
     <div>
       <PageHeader title="Month-End Close" description="Close checklist and transaction review">
-        <Select value={selectedMonth} onValueChange={(v) => setSelectedMonth(v as Month)}>
-          <SelectTrigger className="w-48">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
+        <div className="relative">
+          <select
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(e.target.value as Month)}
+            className="appearance-none bg-[#0f0f22] border border-[#1e1e3a] text-[#e8e8ff] rounded-lg px-4 py-2 pr-8 text-sm focus:outline-none focus:ring-1 focus:ring-[#9997FF] cursor-pointer"
+          >
             {(["dec-2025", "jan-2026", "feb-2026"] as Month[]).map((m) => {
               const status = getMonthStatus(m);
+              const prefix = status === "closed" ? "\u2713 " : status === "in_progress" ? "\u25CB " : "  ";
               return (
-                <SelectItem key={m} value={m}>
-                  <div className="flex items-center gap-2">
-                    {status === "closed" && <CheckCircle2 className="h-3 w-3 text-green-500" />}
-                    {status === "in_progress" && <Loader2 className="h-3 w-3 text-amber-500" />}
-                    {status === "not_started" && <Circle className="h-3 w-3 text-slate-300" />}
-                    {MONTH_LABELS[m]}
-                  </div>
-                </SelectItem>
+                <option key={m} value={m}>
+                  {prefix}{MONTH_LABELS[m]}
+                </option>
               );
             })}
-          </SelectContent>
-        </Select>
+          </select>
+          <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center">
+            <svg className="h-4 w-4 text-[#6b6b9a]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+        </div>
       </PageHeader>
 
-      <Card className="mb-6">
-        <CardContent className="py-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium">
-              Close Progress - {MONTH_LABELS[selectedMonth]}
-            </span>
-            <span className="text-sm text-muted-foreground">
-              {completedCount} of {totalChecks} completed ({progressPct.toFixed(0)}%)
-            </span>
-          </div>
-          <Progress value={progressPct} className="h-3" />
-        </CardContent>
-      </Card>
+      {/* Progress Card */}
+      <div className="bg-[#0f0f22] border border-[#1e1e3a] rounded-xl p-4 mb-6">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm font-medium text-[#e8e8ff]">
+            Close Progress - {MONTH_LABELS[selectedMonth]}
+          </span>
+          <span className="text-sm text-[#6b6b9a]">
+            {completedCount} of {totalChecks} completed ({progressPct.toFixed(0)}%)
+          </span>
+        </div>
+        <div className="w-full h-3 bg-[#1e1e3a] rounded-full overflow-hidden">
+          <div
+            className="h-full rounded-full transition-all duration-500"
+            style={{ width: `${progressPct}%`, backgroundColor: "#9997FF" }}
+          />
+        </div>
+      </div>
 
       <div className="grid grid-cols-3 gap-6">
+        {/* Checklist Items */}
         <div className="col-span-2 space-y-3">
           {checks.map((check, index) => {
             const isLocked =
@@ -110,21 +112,28 @@ export default function ClosePage() {
               check.status === "completed" ? (
                 <CheckCircle2 className="h-5 w-5 text-green-500" />
               ) : check.status === "in_progress" ? (
-                <Loader2 className="h-5 w-5 text-amber-500 animate-spin" />
+                <Loader2 className="h-5 w-5 text-yellow-400 animate-spin" />
               ) : isLocked ? (
-                <Lock className="h-5 w-5 text-slate-300" />
+                <Lock className="h-5 w-5 text-[#5a5a80]" />
               ) : (
-                <Circle className="h-5 w-5 text-slate-300" />
+                <Circle className="h-5 w-5 text-[#5a5a80]" />
               );
 
+            const badgeClasses =
+              check.status === "completed"
+                ? "bg-green-500/12 text-green-400 border border-green-500/20"
+                : check.status === "in_progress"
+                ? "bg-yellow-500/12 text-yellow-400 border border-yellow-500/20"
+                : "bg-[rgba(153,151,255,0.12)] text-[#ACAAFF] border border-[#1e1e3a]";
+
             return (
-              <Card
+              <div
                 key={check.id}
-                className={`transition-all ${
+                className={`bg-[#0f0f22] border border-[#1e1e3a] rounded-xl transition-all ${
                   check.status === "completed" ? "opacity-70" : ""
                 } ${isLocked ? "opacity-50" : ""}`}
               >
-                <CardContent className="py-4">
+                <div className="p-4">
                   <div className="flex items-start gap-4">
                     <button
                       onClick={() => !isLocked && toggleCheck(check.id)}
@@ -135,24 +144,15 @@ export default function ClosePage() {
                     </button>
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
-                        <h3 className={`text-sm font-medium ${check.status === "completed" ? "line-through text-muted-foreground" : ""}`}>
+                        <h3 className={`text-sm font-medium ${check.status === "completed" ? "line-through text-[#6b6b9a]" : "text-[#e8e8ff]"}`}>
                           Step {check.id}: {check.label}
                         </h3>
-                        <Badge
-                          variant={
-                            check.status === "completed"
-                              ? "secondary"
-                              : check.status === "in_progress"
-                              ? "default"
-                              : "outline"
-                          }
-                          className="text-[10px]"
-                        >
+                        <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-medium ${badgeClasses}`}>
                           {check.status === "completed" ? "Done" : check.status === "in_progress" ? "In Progress" : "Pending"}
-                        </Badge>
+                        </span>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-1">{check.description}</p>
-                      <div className="flex items-center gap-4 mt-2 text-[10px] text-muted-foreground">
+                      <p className="text-xs text-[#6b6b9a] mt-1">{check.description}</p>
+                      <div className="flex items-center gap-4 mt-2 text-[10px] text-[#6b6b9a]">
                         {check.assignee && (
                           <span className="flex items-center gap-1">
                             <User className="h-3 w-3" /> {check.assignee}
@@ -166,36 +166,44 @@ export default function ClosePage() {
                       </div>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             );
           })}
         </div>
 
+        {/* Side Panel */}
         <div className="space-y-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">
+          {/* Pending Review Card */}
+          <div className="bg-[#0f0f22] border border-[#1e1e3a] rounded-xl">
+            <div className="p-4 pb-2">
+              <h3 className="text-sm font-medium text-[#e8e8ff]">
                 Pending Review ({pendingTxns.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+              </h3>
+            </div>
+            <div className="px-4 pb-4">
               {pendingTxns.length === 0 ? (
-                <p className="text-xs text-muted-foreground">No pending transactions</p>
+                <p className="text-xs text-[#6b6b9a]">No pending transactions</p>
               ) : (
                 <div className="space-y-3 max-h-[300px] overflow-y-auto">
                   {pendingTxns.map((txn) => (
-                    <div key={txn.id} className="border rounded-lg p-2 text-xs">
+                    <div
+                      key={txn.id}
+                      className="border border-[#1e1e3a] rounded-lg p-2 text-xs hover:bg-[rgba(153,151,255,0.06)] transition-colors"
+                    >
                       <div className="flex items-center justify-between">
-                        <span className="font-medium truncate max-w-[150px]">{txn.description}</span>
-                        <Badge
-                          variant={txn.flagged ? "destructive" : "outline"}
-                          className="text-[10px]"
+                        <span className="font-medium truncate max-w-[150px] text-[#e8e8ff]">{txn.description}</span>
+                        <span
+                          className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-medium ${
+                            txn.flagged
+                              ? "bg-red-500/12 text-red-400 border border-red-500/20"
+                              : "bg-[rgba(153,151,255,0.12)] text-[#ACAAFF] border border-[#1e1e3a]"
+                          }`}
                         >
                           {txn.flagged ? "flagged" : txn.status}
-                        </Badge>
+                        </span>
                       </div>
-                      <div className="flex items-center justify-between mt-1 text-muted-foreground">
+                      <div className="flex items-center justify-between mt-1 text-[#6b6b9a]">
                         <span>{DEPARTMENT_MAP[txn.department]?.name ?? txn.department}</span>
                         <span className="font-mono">{formatUSDT(txn.amount)}</span>
                       </div>
@@ -203,14 +211,15 @@ export default function ClosePage() {
                   ))}
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Department Sign-off</CardTitle>
-            </CardHeader>
-            <CardContent>
+          {/* Department Sign-off Card */}
+          <div className="bg-[#0f0f22] border border-[#1e1e3a] rounded-xl">
+            <div className="p-4 pb-2">
+              <h3 className="text-sm font-medium text-[#e8e8ff]">Department Sign-off</h3>
+            </div>
+            <div className="px-4 pb-4">
               <div className="space-y-2">
                 {DEPARTMENTS.map((dept) => (
                   <div key={dept.id} className="flex items-center justify-between text-xs">
@@ -218,16 +227,16 @@ export default function ClosePage() {
                       {selectedMonth === "dec-2025" ? (
                         <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
                       ) : (
-                        <Circle className="h-3.5 w-3.5 text-slate-300" />
+                        <Circle className="h-3.5 w-3.5 text-[#5a5a80]" />
                       )}
-                      <span>{dept.name}</span>
+                      <span className="text-[#e8e8ff]">{dept.name}</span>
                     </div>
-                    <span className="text-muted-foreground">{dept.lead}</span>
+                    <span className="text-[#6b6b9a]">{dept.lead}</span>
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </div>
     </div>

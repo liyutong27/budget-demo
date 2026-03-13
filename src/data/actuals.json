@@ -51,73 +51,21 @@
       "total": 21357.56
     }
   },
-  "community": {
-    "dec-2025": {
-      "humanCapital": 0,
-      "generalExpense": 2600.0,
-      "total": 2600.0
-    },
-    "jan-2026": {
-      "humanCapital": 0,
-      "generalExpense": 3100.0,
-      "total": 3100.0
-    },
-    "feb-2026": {
-      "humanCapital": 0,
-      "generalExpense": 3120.0,
-      "total": 3120.0
-    },
-    "may-2025": {
-      "humanCapital": 0.0,
-      "generalExpense": 0.0,
-      "total": 0.0
-    },
-    "jun-2025": {
-      "humanCapital": 0.0,
-      "generalExpense": 915.13,
-      "total": 915.13
-    },
-    "jul-2025": {
-      "humanCapital": 0.0,
-      "generalExpense": 2508.82,
-      "total": 2508.82
-    },
-    "aug-2025": {
-      "humanCapital": 0.0,
-      "generalExpense": 6182.69,
-      "total": 6182.69
-    },
-    "sep-2025": {
-      "humanCapital": 0.0,
-      "generalExpense": 1021.6,
-      "total": 1021.6
-    },
-    "oct-2025": {
-      "humanCapital": 0.0,
-      "generalExpense": 3570.99,
-      "total": 3570.99
-    },
-    "nov-2025": {
-      "humanCapital": 0.0,
-      "generalExpense": 2699.09,
-      "total": 2699.09
-    }
-  },
   "gtm": {
     "dec-2025": {
       "humanCapital": 26228.47,
-      "generalExpense": 2097.14,
-      "total": 28325.61
+      "generalExpense": 4697.14,
+      "total": 30925.61
     },
     "jan-2026": {
       "humanCapital": 22970.59,
-      "generalExpense": 0.0,
-      "total": 22970.59
+      "generalExpense": 3100.0,
+      "total": 26070.59
     },
     "feb-2026": {
       "humanCapital": 22500.0,
-      "generalExpense": 3801.9,
-      "total": 26301.9
+      "generalExpense": 6921.9,
+      "total": 29421.9
     },
     "may-2025": {
       "humanCapital": 0.0,
@@ -126,33 +74,33 @@
     },
     "jun-2025": {
       "humanCapital": 9362.77,
-      "generalExpense": 738.14,
-      "total": 10100.91
+      "generalExpense": 1653.27,
+      "total": 11016.04
     },
     "jul-2025": {
       "humanCapital": 8731.18,
-      "generalExpense": 2023.59,
-      "total": 10754.77
+      "generalExpense": 4532.41,
+      "total": 13263.59
     },
     "aug-2025": {
       "humanCapital": 8993.31,
-      "generalExpense": 4986.91,
-      "total": 13980.22
+      "generalExpense": 11169.6,
+      "total": 20162.91
     },
     "sep-2025": {
       "humanCapital": 12276.7,
-      "generalExpense": 824.01,
-      "total": 13100.71
+      "generalExpense": 1845.61,
+      "total": 14122.31
     },
     "oct-2025": {
       "humanCapital": 54547.48,
-      "generalExpense": 2880.33,
-      "total": 57427.81
+      "generalExpense": 6451.32,
+      "total": 60998.8
     },
     "nov-2025": {
       "humanCapital": 28231.37,
-      "generalExpense": 2177.07,
-      "total": 30408.43
+      "generalExpense": 4876.16,
+      "total": 33107.52
     }
   },
   "operations": {

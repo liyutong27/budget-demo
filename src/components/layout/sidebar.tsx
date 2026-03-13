@@ -8,7 +8,6 @@ import {
   Wallet,
   CheckSquare,
   FileText,
-  DollarSign,
 } from "lucide-react";
 
 const navItems = [
@@ -22,14 +21,14 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="fixed left-0 top-0 z-40 flex h-screen w-60 flex-col bg-slate-900 text-white">
-      <div className="flex h-14 items-center gap-2 border-b border-slate-700 px-4">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#26a17b]">
-          <DollarSign className="h-5 w-5 text-white" />
+    <aside className="fixed left-0 top-0 z-40 flex h-screen w-60 flex-col border-r border-[#1e1e3a] bg-[#0a0a1e]">
+      <div className="flex h-14 items-center gap-3 border-b border-[#1e1e3a] px-4">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#9997FF]">
+          <span className="text-sm font-bold text-white">D</span>
         </div>
         <div>
-          <h1 className="text-sm font-bold leading-none">Budget</h1>
-          <p className="text-[10px] text-slate-400">USDT Dashboard</p>
+          <h1 className="text-sm font-bold leading-none text-[#ACAAFF]">Donut</h1>
+          <p className="text-[10px] text-[#5a5a80]">Budget Dashboard</p>
         </div>
       </div>
 
@@ -44,8 +43,8 @@ export function Sidebar() {
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
                 isActive
-                  ? "bg-slate-700/80 text-white font-medium"
-                  : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                  ? "bg-[rgba(153,151,255,0.12)] text-[#ACAAFF] font-medium"
+                  : "text-[#6b6b9a] hover:bg-[rgba(153,151,255,0.06)] hover:text-[#ACAAFF]"
               )}
             >
               <item.icon className="h-4 w-4" />
@@ -55,9 +54,9 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="border-t border-slate-700 px-4 py-3">
-        <p className="text-[10px] text-slate-500">Crypto Startup Inc.</p>
-        <p className="text-[10px] text-slate-500">v1.0 - All amounts in USDT</p>
+      <div className="border-t border-[#1e1e3a] px-4 py-3">
+        <p className="text-[10px] text-[#5a5a80]">Donut Protocol</p>
+        <p className="text-[10px] text-[#5a5a80]">All amounts in USDT</p>
       </div>
     </aside>
   );

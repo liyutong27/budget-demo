@@ -51,108 +51,56 @@
       "generalExpense": 5084.81
     }
   },
-  "community": {
-    "may-2025": {
-      "allocated": 3143.35,
-      "humanCapital": 2200.35,
-      "generalExpense": 943.01
-    },
-    "jun-2025": {
-      "allocated": 3143.35,
-      "humanCapital": 2200.35,
-      "generalExpense": 943.01
-    },
-    "jul-2025": {
-      "allocated": 3143.35,
-      "humanCapital": 2200.35,
-      "generalExpense": 943.01
-    },
-    "aug-2025": {
-      "allocated": 6800.96,
-      "humanCapital": 4760.67,
-      "generalExpense": 2040.29
-    },
-    "sep-2025": {
-      "allocated": 3143.35,
-      "humanCapital": 2200.35,
-      "generalExpense": 943.01
-    },
-    "oct-2025": {
-      "allocated": 3928.09,
-      "humanCapital": 2749.66,
-      "generalExpense": 1178.43
-    },
-    "nov-2025": {
-      "allocated": 3143.35,
-      "humanCapital": 2200.35,
-      "generalExpense": 943.01
-    },
-    "dec-2025": {
-      "allocated": 3143.35,
-      "humanCapital": 2200.35,
-      "generalExpense": 943.01
-    },
-    "jan-2026": {
-      "allocated": 3410.0,
-      "humanCapital": 2387.0,
-      "generalExpense": 1023.0
-    },
-    "feb-2026": {
-      "allocated": 3432.0,
-      "humanCapital": 2402.4,
-      "generalExpense": 1029.6
-    }
-  },
   "gtm": {
     "may-2025": {
-      "allocated": 26078.67,
-      "humanCapital": 18255.07,
-      "generalExpense": 7823.6
+      "allocated": 29222.02,
+      "humanCapital": 20455.42,
+      "generalExpense": 8766.61
     },
     "jun-2025": {
-      "allocated": 26078.67,
-      "humanCapital": 18255.07,
-      "generalExpense": 7823.6
+      "allocated": 29222.02,
+      "humanCapital": 20455.42,
+      "generalExpense": 8766.61
     },
     "jul-2025": {
-      "allocated": 26078.67,
-      "humanCapital": 18255.07,
-      "generalExpense": 7823.6
+      "allocated": 29222.02,
+      "humanCapital": 20455.42,
+      "generalExpense": 8766.61
     },
     "aug-2025": {
-      "allocated": 26078.67,
-      "humanCapital": 18255.07,
-      "generalExpense": 7823.6
+      "allocated": 32879.63,
+      "humanCapital": 23015.74,
+      "generalExpense": 9863.89
     },
     "sep-2025": {
-      "allocated": 26078.67,
-      "humanCapital": 18255.07,
-      "generalExpense": 7823.6
+      "allocated": 29222.02,
+      "humanCapital": 20455.42,
+      "generalExpense": 8766.61
     },
     "oct-2025": {
-      "allocated": 63170.59,
-      "humanCapital": 44219.41,
-      "generalExpense": 18951.18
+      "allocated": 67098.68,
+      "humanCapital": 46969.07,
+      "generalExpense": 20129.61
     },
     "nov-2025": {
-      "allocated": 33449.27,
-      "humanCapital": 23414.49,
-      "generalExpense": 10034.78
+      "allocated": 36592.62,
+      "humanCapital": 25614.84,
+      "generalExpense": 10977.79
     },
     "dec-2025": {
-      "allocated": 31158.17,
-      "humanCapital": 21810.72,
-      "generalExpense": 9347.45
+      "allocated": 34301.52,
+      "humanCapital": 24011.07,
+      "generalExpense": 10290.46
     },
     "jan-2026": {
-      "allocated": 26078.67,
-      "humanCapital": 18255.07,
-      "generalExpense": 7823.6
+      "allocated": 29488.67,
+      "humanCapital": 20642.07,
+      "generalExpense": 8846.6
     },
     "feb-2026": {
-      "allocated": 28932.09,
-      "humanCapital": 20252.46,
-      "generalExpense": 8679.63
+      "allocated": 32364.09,
+      "humanCapital": 22654.86,
+      "generalExpense": 9709.23
     }
   },
   "operations": {

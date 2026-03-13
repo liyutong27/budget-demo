@@ -20,7 +20,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.className} antialiased`}>
         <Sidebar />
-        <main className="ml-60 min-h-screen bg-slate-50 p-6">{children}</main>
+        <main className="ml-60 min-h-screen p-6">{children}</main>
         <Toaster />
       </body>
     </html>
