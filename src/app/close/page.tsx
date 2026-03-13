@@ -6,20 +6,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { formatUSDT, formatDate } from "@/lib/format";
-import { MONTH_LABELS, DEPARTMENT_MAP } from "@/lib/constants";
-import { Month, CloseMonth, CloseCheckStatus } from "@/lib/types";
+import { formatUSDT } from "@/lib/format";
+import { MONTH_LABELS, DEPARTMENTS, DEPARTMENT_MAP } from "@/lib/constants";
+import { Month, CloseMonth, Transaction } from "@/lib/types";
 import closeData from "@/data/close-status.json";
 import transactionsData from "@/data/transactions.json";
 import {
   CheckCircle2, Circle, Loader2, Lock, User, Calendar,
 } from "lucide-react";
 
+type CloseCheckStatus = "not_started" | "in_progress" | "completed";
+
 export default function ClosePage() {
   const [closeStatus, setCloseStatus] = useState<CloseMonth[]>(closeData as CloseMonth[]);
-  const [selectedMonth, setSelectedMonth] = useState<Month>("2026-02");
+  const [selectedMonth, setSelectedMonth] = useState<Month>("feb-2026");
 
   const currentClose = closeStatus.find((c) => c.month === selectedMonth);
   const checks = currentClose?.checks ?? [];
@@ -27,8 +28,9 @@ export default function ClosePage() {
   const totalChecks = checks.length;
   const progressPct = totalChecks > 0 ? (completedCount / totalChecks) * 100 : 0;
 
-  const monthTransactions = transactionsData.filter((t) => t.date.startsWith(selectedMonth));
-  const pendingTxns = monthTransactions.filter((t) => t.status === "pending" || t.status === "flagged");
+  const allTxns = transactionsData as Transaction[];
+  const monthTransactions = allTxns.filter((t) => t.month === selectedMonth);
+  const pendingTxns = monthTransactions.filter((t) => t.flagged || t.status === "pending");
 
   function toggleCheck(checkId: number) {
     setCloseStatus((prev) =>
@@ -36,7 +38,7 @@ export default function ClosePage() {
         if (cm.month !== selectedMonth) return cm;
         const newChecks = cm.checks.map((c) => {
           if (c.id !== checkId) return c;
-          if (c.status === "completed") return c; // Don't un-complete
+          if (c.status === "completed") return c;
           const newStatus: CloseCheckStatus =
             c.status === "not_started" ? "in_progress" : "completed";
           return {
@@ -66,7 +68,7 @@ export default function ClosePage() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {(["2025-12", "2026-01", "2026-02"] as Month[]).map((m) => {
+            {(["dec-2025", "jan-2026", "feb-2026"] as Month[]).map((m) => {
               const status = getMonthStatus(m);
               return (
                 <SelectItem key={m} value={m}>
@@ -83,7 +85,6 @@ export default function ClosePage() {
         </Select>
       </PageHeader>
 
-      {/* Progress Bar */}
       <Card className="mb-6">
         <CardContent className="py-4">
           <div className="flex items-center justify-between mb-2">
@@ -99,7 +100,6 @@ export default function ClosePage() {
       </Card>
 
       <div className="grid grid-cols-3 gap-6">
-        {/* Checklist */}
         <div className="col-span-2 space-y-3">
           {checks.map((check, index) => {
             const isLocked =
@@ -172,9 +172,7 @@ export default function ClosePage() {
           })}
         </div>
 
-        {/* Side Panel */}
         <div className="space-y-4">
-          {/* Pending Transactions */}
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium">
@@ -185,20 +183,20 @@ export default function ClosePage() {
               {pendingTxns.length === 0 ? (
                 <p className="text-xs text-muted-foreground">No pending transactions</p>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-3 max-h-[300px] overflow-y-auto">
                   {pendingTxns.map((txn) => (
                     <div key={txn.id} className="border rounded-lg p-2 text-xs">
                       <div className="flex items-center justify-between">
-                        <span className="font-medium">{txn.description}</span>
+                        <span className="font-medium truncate max-w-[150px]">{txn.description}</span>
                         <Badge
-                          variant={txn.status === "flagged" ? "destructive" : "outline"}
+                          variant={txn.flagged ? "destructive" : "outline"}
                           className="text-[10px]"
                         >
-                          {txn.status}
+                          {txn.flagged ? "flagged" : txn.status}
                         </Badge>
                       </div>
                       <div className="flex items-center justify-between mt-1 text-muted-foreground">
-                        <span>{DEPARTMENT_MAP[txn.departmentId as keyof typeof DEPARTMENT_MAP]?.name}</span>
+                        <span>{DEPARTMENT_MAP[txn.department]?.name ?? txn.department}</span>
                         <span className="font-mono">{formatUSDT(txn.amount)}</span>
                       </div>
                     </div>
@@ -208,33 +206,23 @@ export default function ClosePage() {
             </CardContent>
           </Card>
 
-          {/* Approval Status */}
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium">Department Sign-off</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                {[
-                  { dept: "Tech", lead: "Kevin Li", signed: selectedMonth === "2025-12" },
-                  { dept: "Community", lead: "Sarah Kim", signed: selectedMonth === "2025-12" },
-                  { dept: "Internal Ops", lead: "Jenny Zhang", signed: selectedMonth === "2025-12" },
-                  { dept: "GTM", lead: "David Wang", signed: selectedMonth === "2025-12" },
-                  { dept: "Credit Card", lead: "Mike Liu", signed: selectedMonth === "2025-12" || selectedMonth === "2026-01" },
-                  { dept: "Product", lead: "Tom Wu", signed: selectedMonth === "2025-12" },
-                  { dept: "Design", lead: "Lisa Park", signed: selectedMonth === "2025-12" },
-                  { dept: "AWS & Infra", lead: "Alex Chen", signed: selectedMonth === "2025-12" },
-                ].map((item) => (
-                  <div key={item.dept} className="flex items-center justify-between text-xs">
+                {DEPARTMENTS.map((dept) => (
+                  <div key={dept.id} className="flex items-center justify-between text-xs">
                     <div className="flex items-center gap-2">
-                      {item.signed ? (
+                      {selectedMonth === "dec-2025" ? (
                         <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
                       ) : (
                         <Circle className="h-3.5 w-3.5 text-slate-300" />
                       )}
-                      <span>{item.dept}</span>
+                      <span>{dept.name}</span>
                     </div>
-                    <span className="text-muted-foreground">{item.lead}</span>
+                    <span className="text-muted-foreground">{dept.lead}</span>
                   </div>
                 ))}
               </div>

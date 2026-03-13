@@ -5,10 +5,10 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { formatUSDT, formatPercent, formatMonth, formatDate } from "@/lib/format";
+import { formatUSDT, formatPercent, formatDate } from "@/lib/format";
 import { calculateKPISummary, calculateBudgetVsActual, getMonthlyTotals, getDepartmentTotals, generateAlerts } from "@/lib/calculations";
 import { MONTHS, MONTH_LABELS, DEPARTMENT_MAP, CHART_COLORS } from "@/lib/constants";
-import { Month } from "@/lib/types";
+import { Month, ActualsData, BudgetsData, Transaction } from "@/lib/types";
 import budgetsData from "@/data/budgets.json";
 import actualsData from "@/data/actuals.json";
 import transactionsData from "@/data/transactions.json";
@@ -21,12 +21,12 @@ import {
   DollarSign, TrendingUp, AlertTriangle, Clock, ArrowUpRight, ArrowDownRight,
 } from "lucide-react";
 
-const budgets = budgetsData as any[];
-const actuals = actualsData as any[];
-const transactions = transactionsData as any[];
+const budgets = budgetsData as BudgetsData;
+const actuals = actualsData as ActualsData;
+const transactions = transactionsData as Transaction[];
 
 export default function DashboardPage() {
-  const [selectedMonth, setSelectedMonth] = useState<Month>("2026-02");
+  const [selectedMonth, setSelectedMonth] = useState<Month>("feb-2026");
   const previousMonth = MONTHS[MONTHS.indexOf(selectedMonth) - 1] as Month | undefined;
 
   const kpi = useMemo(
@@ -50,7 +50,10 @@ export default function DashboardPage() {
     [selectedMonth]
   );
 
-  const recentTxns = transactions.slice(0, 8);
+  const recentTxns = transactions
+    .filter((t) => t.month === selectedMonth)
+    .sort((a, b) => b.amount - a.amount)
+    .slice(0, 10);
 
   return (
     <div>
@@ -103,7 +106,6 @@ export default function DashboardPage() {
 
       {/* Charts Row 1 */}
       <div className="grid grid-cols-3 gap-4 mb-6">
-        {/* Budget vs Actuals */}
         <Card className="col-span-2">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Budget vs Actuals</CardTitle>
@@ -123,7 +125,6 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Department Breakdown Pie */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Spend by Department</CardTitle>
@@ -160,7 +161,6 @@ export default function DashboardPage() {
 
       {/* Charts Row 2 */}
       <div className="grid grid-cols-3 gap-4 mb-6">
-        {/* Monthly Trend */}
         <Card className="col-span-2">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Monthly Spend Trend</CardTitle>
@@ -169,7 +169,7 @@ export default function DashboardPage() {
             <ResponsiveContainer width="100%" height={250}>
               <AreaChart data={monthlyTotals} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="month" tick={{ fontSize: 11 }} tickFormatter={(v) => MONTH_LABELS[v as Month]?.slice(0, 3) || String(v)} />
+                <XAxis dataKey="month" tick={{ fontSize: 11 }} tickFormatter={(v) => (MONTH_LABELS[v as Month] ?? String(v)).slice(0, 3)} />
                 <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `$${(Number(v) / 1000).toFixed(0)}K`} />
                 <Tooltip formatter={(v) => formatUSDT(Number(v))} labelFormatter={(l) => MONTH_LABELS[l as Month] || l} />
                 <Legend />
@@ -210,7 +210,7 @@ export default function DashboardPage() {
       {/* Recent Transactions */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium">Recent Transactions</CardTitle>
+          <CardTitle className="text-sm font-medium">Top Transactions - {MONTH_LABELS[selectedMonth]}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -219,6 +219,7 @@ export default function DashboardPage() {
                 <tr className="border-b text-xs text-muted-foreground">
                   <th className="text-left py-2 font-medium">Date</th>
                   <th className="text-left py-2 font-medium">Department</th>
+                  <th className="text-left py-2 font-medium">Applicant</th>
                   <th className="text-left py-2 font-medium">Description</th>
                   <th className="text-left py-2 font-medium">Type</th>
                   <th className="text-right py-2 font-medium">Amount</th>
@@ -229,20 +230,21 @@ export default function DashboardPage() {
                 {recentTxns.map((txn) => (
                   <tr key={txn.id} className="border-b last:border-0 hover:bg-muted/50">
                     <td className="py-2 text-muted-foreground">{formatDate(txn.date)}</td>
-                    <td className="py-2">{DEPARTMENT_MAP[txn.departmentId as keyof typeof DEPARTMENT_MAP]?.name ?? txn.departmentId}</td>
-                    <td className="py-2">{txn.description}</td>
+                    <td className="py-2">{DEPARTMENT_MAP[txn.department]?.name ?? txn.department}</td>
+                    <td className="py-2 text-muted-foreground">{txn.applicant}</td>
+                    <td className="py-2 max-w-[200px] truncate">{txn.description}</td>
                     <td className="py-2">
                       <Badge variant="outline" className="text-[10px]">
-                        {txn.paymentType === "crypto_wallet" ? "Crypto" : txn.paymentType === "credit_card" ? "Card" : txn.paymentType === "bank_transfer" ? "Bank" : "Reimb"}
+                        {txn.type === "human-capital" ? "HC" : "GE"}
                       </Badge>
                     </td>
                     <td className="py-2 text-right font-mono">{formatUSDT(txn.amount)}</td>
                     <td className="py-2">
                       <Badge
-                        variant={txn.status === "approved" ? "secondary" : txn.status === "flagged" ? "destructive" : "outline"}
+                        variant={txn.flagged ? "destructive" : "secondary"}
                         className="text-[10px]"
                       >
-                        {txn.status}
+                        {txn.flagged ? "flagged" : txn.status}
                       </Badge>
                     </td>
                   </tr>

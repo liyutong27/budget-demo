@@ -1,33 +1,314 @@
-[
-  {"departmentId":"aws-infrastructure","month":"2025-12","allocated":500,"notes":"Minimal usage"},
-  {"departmentId":"aws-infrastructure","month":"2026-01","allocated":2500,"notes":"Scaling infra"},
-  {"departmentId":"aws-infrastructure","month":"2026-02","allocated":2500,"notes":""},
-
-  {"departmentId":"community","month":"2025-12","allocated":3000,"notes":""},
-  {"departmentId":"community","month":"2026-01","allocated":3500,"notes":"Event planned"},
-  {"departmentId":"community","month":"2026-02","allocated":3500,"notes":""},
-
-  {"departmentId":"credit-card-subscription","month":"2025-12","allocated":18000,"notes":"Include SaaS tools"},
-  {"departmentId":"credit-card-subscription","month":"2026-01","allocated":50000,"notes":"Major tool migration"},
-  {"departmentId":"credit-card-subscription","month":"2026-02","allocated":40000,"notes":"Stabilizing"},
-
-  {"departmentId":"design","month":"2025-12","allocated":3500,"notes":""},
-  {"departmentId":"design","month":"2026-01","allocated":1000,"notes":"Reduced scope"},
-  {"departmentId":"design","month":"2026-02","allocated":1000,"notes":""},
-
-  {"departmentId":"gtm","month":"2025-12","allocated":2500,"notes":""},
-  {"departmentId":"gtm","month":"2026-01","allocated":500,"notes":"Pause marketing"},
-  {"departmentId":"gtm","month":"2026-02","allocated":4500,"notes":"New campaign"},
-
-  {"departmentId":"internal-operation","month":"2025-12","allocated":35000,"notes":"Legal + Reimbursement"},
-  {"departmentId":"internal-operation","month":"2026-01","allocated":26000,"notes":"Legal costs"},
-  {"departmentId":"internal-operation","month":"2026-02","allocated":3000,"notes":"Normalized"},
-
-  {"departmentId":"product","month":"2025-12","allocated":500,"notes":""},
-  {"departmentId":"product","month":"2026-01","allocated":500,"notes":""},
-  {"departmentId":"product","month":"2026-02","allocated":500,"notes":""},
-
-  {"departmentId":"tech","month":"2025-12","allocated":4000,"notes":""},
-  {"departmentId":"tech","month":"2026-01","allocated":1500,"notes":""},
-  {"departmentId":"tech","month":"2026-02","allocated":16000,"notes":"New hires + equipment"}
-]
+{
+  "design": {
+    "may-2025": {
+      "allocated": 16949.38,
+      "humanCapital": 11864.56,
+      "generalExpense": 5084.81
+    },
+    "jun-2025": {
+      "allocated": 16949.38,
+      "humanCapital": 11864.56,
+      "generalExpense": 5084.81
+    },
+    "jul-2025": {
+      "allocated": 16949.38,
+      "humanCapital": 11864.56,
+      "generalExpense": 5084.81
+    },
+    "aug-2025": {
+      "allocated": 16949.38,
+      "humanCapital": 11864.56,
+      "generalExpense": 5084.81
+    },
+    "sep-2025": {
+      "allocated": 16949.38,
+      "humanCapital": 11864.56,
+      "generalExpense": 5084.81
+    },
+    "oct-2025": {
+      "allocated": 43246.27,
+      "humanCapital": 30272.39,
+      "generalExpense": 12973.88
+    },
+    "nov-2025": {
+      "allocated": 23493.32,
+      "humanCapital": 16445.32,
+      "generalExpense": 7047.99
+    },
+    "dec-2025": {
+      "allocated": 21947.2,
+      "humanCapital": 15363.04,
+      "generalExpense": 6584.16
+    },
+    "jan-2026": {
+      "allocated": 16949.38,
+      "humanCapital": 11864.56,
+      "generalExpense": 5084.81
+    },
+    "feb-2026": {
+      "allocated": 16949.38,
+      "humanCapital": 11864.56,
+      "generalExpense": 5084.81
+    }
+  },
+  "community": {
+    "may-2025": {
+      "allocated": 3143.35,
+      "humanCapital": 2200.35,
+      "generalExpense": 943.01
+    },
+    "jun-2025": {
+      "allocated": 3143.35,
+      "humanCapital": 2200.35,
+      "generalExpense": 943.01
+    },
+    "jul-2025": {
+      "allocated": 3143.35,
+      "humanCapital": 2200.35,
+      "generalExpense": 943.01
+    },
+    "aug-2025": {
+      "allocated": 6800.96,
+      "humanCapital": 4760.67,
+      "generalExpense": 2040.29
+    },
+    "sep-2025": {
+      "allocated": 3143.35,
+      "humanCapital": 2200.35,
+      "generalExpense": 943.01
+    },
+    "oct-2025": {
+      "allocated": 3928.09,
+      "humanCapital": 2749.66,
+      "generalExpense": 1178.43
+    },
+    "nov-2025": {
+      "allocated": 3143.35,
+      "humanCapital": 2200.35,
+      "generalExpense": 943.01
+    },
+    "dec-2025": {
+      "allocated": 3143.35,
+      "humanCapital": 2200.35,
+      "generalExpense": 943.01
+    },
+    "jan-2026": {
+      "allocated": 3410.0,
+      "humanCapital": 2387.0,
+      "generalExpense": 1023.0
+    },
+    "feb-2026": {
+      "allocated": 3432.0,
+      "humanCapital": 2402.4,
+      "generalExpense": 1029.6
+    }
+  },
+  "gtm": {
+    "may-2025": {
+      "allocated": 26078.67,
+      "humanCapital": 18255.07,
+      "generalExpense": 7823.6
+    },
+    "jun-2025": {
+      "allocated": 26078.67,
+      "humanCapital": 18255.07,
+      "generalExpense": 7823.6
+    },
+    "jul-2025": {
+      "allocated": 26078.67,
+      "humanCapital": 18255.07,
+      "generalExpense": 7823.6
+    },
+    "aug-2025": {
+      "allocated": 26078.67,
+      "humanCapital": 18255.07,
+      "generalExpense": 7823.6
+    },
+    "sep-2025": {
+      "allocated": 26078.67,
+      "humanCapital": 18255.07,
+      "generalExpense": 7823.6
+    },
+    "oct-2025": {
+      "allocated": 63170.59,
+      "humanCapital": 44219.41,
+      "generalExpense": 18951.18
+    },
+    "nov-2025": {
+      "allocated": 33449.27,
+      "humanCapital": 23414.49,
+      "generalExpense": 10034.78
+    },
+    "dec-2025": {
+      "allocated": 31158.17,
+      "humanCapital": 21810.72,
+      "generalExpense": 9347.45
+    },
+    "jan-2026": {
+      "allocated": 26078.67,
+      "humanCapital": 18255.07,
+      "generalExpense": 7823.6
+    },
+    "feb-2026": {
+      "allocated": 28932.09,
+      "humanCapital": 20252.46,
+      "generalExpense": 8679.63
+    }
+  },
+  "operations": {
+    "may-2025": {
+      "allocated": 63467.64,
+      "humanCapital": 44427.35,
+      "generalExpense": 19040.29
+    },
+    "jun-2025": {
+      "allocated": 63467.64,
+      "humanCapital": 44427.35,
+      "generalExpense": 19040.29
+    },
+    "jul-2025": {
+      "allocated": 63467.64,
+      "humanCapital": 44427.35,
+      "generalExpense": 19040.29
+    },
+    "aug-2025": {
+      "allocated": 132144.9,
+      "humanCapital": 92501.43,
+      "generalExpense": 39643.47
+    },
+    "sep-2025": {
+      "allocated": 63467.64,
+      "humanCapital": 44427.35,
+      "generalExpense": 19040.29
+    },
+    "oct-2025": {
+      "allocated": 81838.01,
+      "humanCapital": 57286.61,
+      "generalExpense": 24551.4
+    },
+    "nov-2025": {
+      "allocated": 63467.64,
+      "humanCapital": 44427.35,
+      "generalExpense": 19040.29
+    },
+    "dec-2025": {
+      "allocated": 63467.64,
+      "humanCapital": 44427.35,
+      "generalExpense": 19040.29
+    },
+    "jan-2026": {
+      "allocated": 80101.22,
+      "humanCapital": 56070.85,
+      "generalExpense": 24030.37
+    },
+    "feb-2026": {
+      "allocated": 63467.64,
+      "humanCapital": 44427.35,
+      "generalExpense": 19040.29
+    }
+  },
+  "tech": {
+    "may-2025": {
+      "allocated": 161925.44,
+      "humanCapital": 113347.81,
+      "generalExpense": 48577.63
+    },
+    "jun-2025": {
+      "allocated": 161925.44,
+      "humanCapital": 113347.81,
+      "generalExpense": 48577.63
+    },
+    "jul-2025": {
+      "allocated": 161925.44,
+      "humanCapital": 113347.81,
+      "generalExpense": 48577.63
+    },
+    "aug-2025": {
+      "allocated": 161925.44,
+      "humanCapital": 113347.81,
+      "generalExpense": 48577.63
+    },
+    "sep-2025": {
+      "allocated": 161925.44,
+      "humanCapital": 113347.81,
+      "generalExpense": 48577.63
+    },
+    "oct-2025": {
+      "allocated": 428077.35,
+      "humanCapital": 299654.15,
+      "generalExpense": 128423.21
+    },
+    "nov-2025": {
+      "allocated": 222733.06,
+      "humanCapital": 155913.14,
+      "generalExpense": 66819.92
+    },
+    "dec-2025": {
+      "allocated": 207059.12,
+      "humanCapital": 144941.38,
+      "generalExpense": 62117.73
+    },
+    "jan-2026": {
+      "allocated": 161925.44,
+      "humanCapital": 113347.81,
+      "generalExpense": 48577.63
+    },
+    "feb-2026": {
+      "allocated": 161925.44,
+      "humanCapital": 113347.81,
+      "generalExpense": 48577.63
+    }
+  },
+  "product": {
+    "may-2025": {
+      "allocated": 20752.42,
+      "humanCapital": 14526.7,
+      "generalExpense": 6225.73
+    },
+    "jun-2025": {
+      "allocated": 20752.42,
+      "humanCapital": 14526.7,
+      "generalExpense": 6225.73
+    },
+    "jul-2025": {
+      "allocated": 20752.42,
+      "humanCapital": 14526.7,
+      "generalExpense": 6225.73
+    },
+    "aug-2025": {
+      "allocated": 20752.42,
+      "humanCapital": 14526.7,
+      "generalExpense": 6225.73
+    },
+    "sep-2025": {
+      "allocated": 20752.42,
+      "humanCapital": 14526.7,
+      "generalExpense": 6225.73
+    },
+    "oct-2025": {
+      "allocated": 30371.18,
+      "humanCapital": 21259.82,
+      "generalExpense": 9111.35
+    },
+    "nov-2025": {
+      "allocated": 20752.42,
+      "humanCapital": 14526.7,
+      "generalExpense": 6225.73
+    },
+    "dec-2025": {
+      "allocated": 20752.42,
+      "humanCapital": 14526.7,
+      "generalExpense": 6225.73
+    },
+    "jan-2026": {
+      "allocated": 42033.84,
+      "humanCapital": 29423.69,
+      "generalExpense": 12610.15
+    },
+    "feb-2026": {
+      "allocated": 62127.2,
+      "humanCapital": 43489.04,
+      "generalExpense": 18638.16
+    }
+  }
+}

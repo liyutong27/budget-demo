@@ -1,80 +1,88 @@
 export type Month =
-  | "2025-05" | "2025-06" | "2025-07" | "2025-08"
-  | "2025-09" | "2025-10" | "2025-11" | "2025-12"
-  | "2026-01" | "2026-02";
+  | "may-2025" | "jun-2025" | "jul-2025" | "aug-2025"
+  | "sep-2025" | "oct-2025" | "nov-2025" | "dec-2025"
+  | "jan-2026" | "feb-2026";
 
-export type DepartmentId =
-  | "aws-infrastructure"
-  | "community"
-  | "credit-card-subscription"
-  | "design"
-  | "gtm"
-  | "internal-operation"
-  | "product"
-  | "tech";
-
-export type ExpenseCategory =
-  | "Daily Tech Usage"
-  | "Community"
-  | "Event"
-  | "Credit Card-subscription"
-  | "Reimbursement"
-  | "Travel Business"
-  | "KOL"
-  | "Legal";
-
-export type PaymentType = "crypto_wallet" | "credit_card" | "bank_transfer" | "reimbursement";
-
-export type TransactionStatus = "approved" | "pending" | "flagged" | "rejected";
-
-export type CloseCheckStatus = "not_started" | "in_progress" | "completed";
-
-export type Role = "admin" | "finance" | "dept_lead" | "viewer";
+export type DepartmentId = "tech" | "gtm" | "design" | "product" | "operations" | "community";
 
 export interface Department {
-  id: DepartmentId;
+  id: string;
   name: string;
   color: string;
   lead: string;
 }
 
-export interface BudgetAllocation {
-  departmentId: DepartmentId;
-  month: Month;
-  allocated: number;
-  notes?: string;
-}
-
-export interface ActualSpend {
-  departmentId: DepartmentId;
-  month: Month;
-  category: ExpenseCategory;
-  amount: number;
-}
-
 export interface Transaction {
   id: string;
   date: string;
-  departmentId: DepartmentId;
-  category: ExpenseCategory;
+  month: string;
+  department: string;
+  category: string;
+  subcategory: string;
   description: string;
+  applicant: string;
+  paymentType: string;
+  currency: string;
   amount: number;
-  paymentType: PaymentType;
-  status: TransactionStatus;
-  vendor?: string;
+  type: "general-expense" | "human-capital";
+  status: "approved" | "pending" | "flagged" | "rejected";
+  flagged: boolean;
 }
 
-export interface PLEntry {
-  category: string;
-  subCategory: string;
-  monthly: Record<Month, number>;
+export interface ActualsData {
+  [deptId: string]: {
+    [month: string]: {
+      humanCapital: number;
+      generalExpense: number;
+      total: number;
+    };
+  };
+}
+
+export interface BudgetsData {
+  [deptId: string]: {
+    [month: string]: {
+      allocated: number;
+      humanCapital: number;
+      generalExpense: number;
+    };
+  };
+}
+
+export interface BudgetVsActual {
+  departmentId: string;
+  departmentName: string;
+  color: string;
+  allocated: number;
+  actual: number;
+  variance: number;
+  utilization: number;
+}
+
+export interface KPISummary {
+  totalBudget: number;
+  totalSpend: number;
+  utilization: number;
+  flaggedCount: number;
+  monthOverMonthChange: number;
+}
+
+export interface Alert {
+  id: string;
+  type: "over_budget" | "flagged_transaction" | "pending_approval";
+  title: string;
+  description: string;
+  severity: "high" | "medium" | "low";
+  departmentId?: string;
+  timestamp: string;
+  transactionId?: string;
 }
 
 export interface CloseCheck {
   id: number;
   label: string;
   description: string;
-  status: CloseCheckStatus;
+  status: "not_started" | "in_progress" | "completed";
   assignee?: string;
   completedAt?: string;
 }
@@ -91,30 +99,4 @@ export interface SlackConfig {
   includeCharts: boolean;
 }
 
-export interface KPISummary {
-  totalBudget: number;
-  totalSpend: number;
-  utilization: number;
-  flaggedCount: number;
-  monthOverMonthChange: number;
-}
-
-export interface BudgetVsActual {
-  departmentId: DepartmentId;
-  departmentName: string;
-  color: string;
-  allocated: number;
-  actual: number;
-  variance: number;
-  utilization: number;
-}
-
-export interface Alert {
-  id: string;
-  type: "over_budget" | "flagged_transaction" | "pending_approval";
-  title: string;
-  description: string;
-  severity: "high" | "medium" | "low";
-  departmentId?: DepartmentId;
-  timestamp: string;
-}
+export type Role = "admin" | "finance" | "dept_lead" | "viewer";

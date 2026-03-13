@@ -11,10 +11,10 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatUSDT } from "@/lib/format";
-import { calculateBudgetVsActual, calculateKPISummary } from "@/lib/calculations";
+import { calculateBudgetVsActual, calculateKPISummary, getActualTotal } from "@/lib/calculations";
 import { buildSlackMessage } from "@/lib/slack";
 import { MONTHS, MONTH_LABELS, DEPARTMENTS, CHART_COLORS } from "@/lib/constants";
-import { Month, PLEntry } from "@/lib/types";
+import { Month, ActualsData, BudgetsData, Transaction } from "@/lib/types";
 import plData from "@/data/pl-statement.json";
 import budgetsData from "@/data/budgets.json";
 import actualsData from "@/data/actuals.json";
@@ -27,10 +27,10 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-const plEntries = plData as PLEntry[];
-
-// Group P&L by category
-const PL_CATEGORIES = ["Human Capital", "Marketing&Community", "Product", "Operations", "General Expense"];
+const budgets = budgetsData as BudgetsData;
+const actuals = actualsData as ActualsData;
+const transactions = transactionsData as Transaction[];
+const pl = plData as any;
 
 export default function ReportsPage() {
   return (
@@ -62,12 +62,63 @@ export default function ReportsPage() {
   );
 }
 
+// P&L categories map to the nested pl-statement.json structure
+const PL_STRUCTURE = [
+  {
+    key: "humanCapital",
+    label: "Human Capital",
+    subcategories: [
+      { key: "salary", label: "Salary" },
+      { key: "headhunting", label: "Headhunting" },
+      { key: "bonus", label: "Bonus" },
+      { key: "signOnBonus", label: "Sign-on Bonus" },
+      { key: "gasFees", label: "Gas Fees" },
+      { key: "educationTraining", label: "Education & Training" },
+      { key: "employeeBenefits", label: "Employee Benefits" },
+      { key: "tokenOptionRepurchase", label: "Token Option Repurchase" },
+    ],
+  },
+  {
+    key: "generalExpense.marketingCommunity",
+    label: "Marketing & Community",
+    subcategories: [
+      { key: "community", label: "Community" },
+      { key: "event", label: "Event" },
+      { key: "pr", label: "PR" },
+      { key: "kol", label: "KOL" },
+    ],
+  },
+  {
+    key: "generalExpense.product",
+    label: "Product",
+    subcategories: [
+      { key: "design", label: "Design" },
+      { key: "dailyTechUsage", label: "Daily Tech Usage" },
+    ],
+  },
+  {
+    key: "generalExpense.operations",
+    label: "Operations",
+    subcategories: [
+      { key: "legal", label: "Legal" },
+      { key: "dailyOfficeUsage", label: "Daily Office Usage" },
+      { key: "reimbursement", label: "Reimbursement" },
+      { key: "travelBusiness", label: "Travel Business" },
+      { key: "creditCardSubscription", label: "Credit Card Subscription" },
+    ],
+  },
+];
+
+function getNestedValue(obj: any, path: string): any {
+  return path.split(".").reduce((o, k) => o?.[k], obj);
+}
+
 function PLStatement() {
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
-    new Set(PL_CATEGORIES)
+    new Set(PL_STRUCTURE.map((c) => c.key))
   );
 
-  const displayMonths: Month[] = ["2025-12", "2026-01", "2026-02"];
+  const displayMonths: Month[] = ["dec-2025", "jan-2026", "feb-2026"];
 
   function toggleCategory(cat: string) {
     setExpandedCategories((prev) => {
@@ -78,19 +129,22 @@ function PLStatement() {
     });
   }
 
-  // Calculate category totals
-  function getCategoryTotal(category: string, month: Month): number {
-    if (category === "General Expense") {
-      const entry = plEntries.find((e) => e.category === "General Expense");
-      return entry?.monthly[month] ?? 0;
-    }
-    return plEntries
-      .filter((e) => e.category === category && e.subCategory !== "Total")
-      .reduce((sum, e) => sum + (e.monthly[month] ?? 0), 0);
+  function getCategoryTotal(catKey: string, month: Month): number {
+    const data = getNestedValue(pl, catKey);
+    return data?.total?.[month] ?? 0;
+  }
+
+  function getSubcategoryValue(catKey: string, subKey: string, month: Month): number {
+    const data = getNestedValue(pl, catKey);
+    return data?.[subKey]?.[month] ?? 0;
   }
 
   function getGrandTotal(month: Month): number {
-    return PL_CATEGORIES.reduce((sum, cat) => sum + getCategoryTotal(cat, month), 0);
+    return (pl.totalExpenses?.[month] ?? 0);
+  }
+
+  function getYTD(getter: (m: Month) => number): number {
+    return MONTHS.reduce((sum, m) => sum + getter(m), 0);
   }
 
   return (
@@ -111,55 +165,61 @@ function PLStatement() {
               </tr>
             </thead>
             <tbody>
-              {PL_CATEGORIES.map((category) => {
-                const isExpanded = expandedCategories.has(category);
-                const subEntries = plEntries.filter(
-                  (e) => e.category === category && e.subCategory !== "Total"
-                );
-                const ytdTotal = MONTHS.reduce((sum, m) => sum + getCategoryTotal(category, m), 0);
+              {/* Revenue */}
+              <tr className="border-b bg-muted/30">
+                <td className="py-2 font-semibold">Total Revenue</td>
+                {displayMonths.map((m) => (
+                  <td key={m} className="py-2 text-right font-mono font-semibold">
+                    {formatUSDT(pl.totalRevenue?.[m] ?? 0)}
+                  </td>
+                ))}
+                <td className="py-2 text-right font-mono font-semibold">
+                  {formatUSDT(getYTD((m) => pl.totalRevenue?.[m] ?? 0))}
+                </td>
+              </tr>
+
+              {PL_STRUCTURE.map((category) => {
+                const isExpanded = expandedCategories.has(category.key);
+                const ytdTotal = getYTD((m) => getCategoryTotal(category.key, m));
 
                 return (
-                  <React.Fragment key={category}>
-                    {/* Category Header */}
+                  <React.Fragment key={category.key}>
                     <tr
                       className="border-b bg-muted/30 cursor-pointer hover:bg-muted/50"
-                      onClick={() => toggleCategory(category)}
+                      onClick={() => toggleCategory(category.key)}
                     >
                       <td className="py-2 font-semibold">
                         <div className="flex items-center gap-1">
                           {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-                          {category}
+                          {category.label}
                         </div>
                       </td>
                       {displayMonths.map((m) => (
                         <td key={m} className="py-2 text-right font-mono font-semibold">
-                          {formatUSDT(getCategoryTotal(category, m))}
+                          {formatUSDT(getCategoryTotal(category.key, m))}
                         </td>
                       ))}
                       <td className="py-2 text-right font-mono font-semibold">
                         {formatUSDT(ytdTotal)}
                       </td>
                     </tr>
-                    {/* Sub-entries */}
                     {isExpanded &&
-                      subEntries.map((entry) => {
-                        const entryYtd = MONTHS.reduce(
-                          (sum, m) => sum + (entry.monthly[m] ?? 0),
-                          0
-                        );
-                        if (entryYtd === 0) return null;
+                      category.subcategories.map((sub) => {
+                        const subYtd = getYTD((m) => getSubcategoryValue(category.key, sub.key, m));
+                        if (subYtd === 0) return null;
                         return (
-                          <tr key={entry.subCategory} className="border-b hover:bg-muted/30">
-                            <td className="py-1.5 pl-8 text-muted-foreground">
-                              {entry.subCategory}
-                            </td>
-                            {displayMonths.map((m) => (
-                              <td key={m} className="py-1.5 text-right font-mono text-muted-foreground">
-                                {entry.monthly[m] ? formatUSDT(entry.monthly[m]) : "-"}
-                              </td>
-                            ))}
+                          <tr key={sub.key} className="border-b hover:bg-muted/30">
+                            <td className="py-1.5 pl-8 text-muted-foreground">{sub.label}</td>
+                            {displayMonths.map((m) => {
+                              const val = getSubcategoryValue(category.key, sub.key, m);
+                              return (
+                                <td key={m} className="py-1.5 text-right font-mono text-muted-foreground">
+                                  {val > 0 ? formatUSDT(val) : "-"}
+                                </td>
+                              );
+                            })}
                             <td className="py-1.5 text-right font-mono text-muted-foreground">
-                              {formatUSDT(entryYtd)}
+                              {formatUSDT(subYtd)}
                             </td>
                           </tr>
                         );
@@ -167,6 +227,7 @@ function PLStatement() {
                   </React.Fragment>
                 );
               })}
+
               {/* Grand Total */}
               <tr className="border-t-2 bg-slate-100 font-bold">
                 <td className="py-2">TOTAL OPERATING EXPENSES</td>
@@ -176,7 +237,23 @@ function PLStatement() {
                   </td>
                 ))}
                 <td className="py-2 text-right font-mono">
-                  {formatUSDT(MONTHS.reduce((sum, m) => sum + getGrandTotal(m), 0))}
+                  {formatUSDT(getYTD((m) => getGrandTotal(m)))}
+                </td>
+              </tr>
+
+              {/* Net */}
+              <tr className="bg-slate-50 font-bold">
+                <td className="py-2">NET OPERATING INCOME</td>
+                {displayMonths.map((m) => {
+                  const net = pl.netOperatingIncome?.[m] ?? 0;
+                  return (
+                    <td key={m} className={`py-2 text-right font-mono ${net < 0 ? "text-red-600" : "text-green-600"}`}>
+                      {formatUSDT(net)}
+                    </td>
+                  );
+                })}
+                <td className={`py-2 text-right font-mono ${getYTD((m) => pl.netOperatingIncome?.[m] ?? 0) < 0 ? "text-red-600" : "text-green-600"}`}>
+                  {formatUSDT(getYTD((m) => pl.netOperatingIncome?.[m] ?? 0))}
                 </td>
               </tr>
             </tbody>
@@ -192,21 +269,20 @@ function DepartmentReports() {
   const dept = DEPARTMENTS.find((d) => d.id === selectedDept)!;
 
   const chartData = MONTHS.map((m) => ({
-    month: MONTH_LABELS[m].slice(0, 3),
-    budget: budgetsData.filter((b: any) => b.departmentId === selectedDept && b.month === m).reduce((s: number, b: any) => s + b.allocated, 0),
-    actual: (actualsData as any[]).filter((a) => a.departmentId === selectedDept && a.month === m).reduce((s: number, a: any) => s + a.amount, 0),
+    month: (MONTH_LABELS[m] ?? m).slice(0, 3),
+    budget: budgets[selectedDept]?.[m]?.allocated ?? 0,
+    actual: getActualTotal(actuals, selectedDept, m),
   }));
 
-  // Category breakdown
-  const categories = Array.from(
-    new Set((actualsData as any[]).filter((a) => a.departmentId === selectedDept).map((a) => a.category))
-  );
-  const categoryData = categories.map((cat) => ({
-    category: cat,
-    total: (actualsData as any[])
-      .filter((a) => a.departmentId === selectedDept && a.category === cat)
-      .reduce((s: number, a: any) => s + a.amount, 0),
-  }));
+  // Category breakdown from transactions
+  const deptTxns = transactions.filter((t) => t.department === selectedDept);
+  const categoryMap = new Map<string, number>();
+  deptTxns.forEach((t) => {
+    categoryMap.set(t.category, (categoryMap.get(t.category) ?? 0) + t.amount);
+  });
+  const categoryData = Array.from(categoryMap.entries())
+    .map(([category, total]) => ({ category, total }))
+    .sort((a, b) => b.total - a.total);
 
   return (
     <div className="space-y-4">
@@ -250,22 +326,22 @@ function DepartmentReports() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {categoryData
-                .sort((a, b) => b.total - a.total)
-                .map((item) => (
-                  <div key={item.category} className="space-y-1">
-                    <div className="flex items-center justify-between text-sm">
-                      <span>{item.category}</span>
-                      <span className="font-mono">{formatUSDT(item.total)}</span>
-                    </div>
-                    <Progress
-                      value={
-                        (item.total / Math.max(...categoryData.map((c) => c.total))) * 100
-                      }
-                      className="h-2"
-                    />
+              {categoryData.slice(0, 8).map((item) => (
+                <div key={item.category} className="space-y-1">
+                  <div className="flex items-center justify-between text-sm">
+                    <span>{item.category}</span>
+                    <span className="font-mono">{formatUSDT(item.total)}</span>
                   </div>
-                ))}
+                  <Progress
+                    value={
+                      categoryData[0]?.total > 0
+                        ? (item.total / categoryData[0].total) * 100
+                        : 0
+                    }
+                    className="h-2"
+                  />
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
@@ -280,9 +356,9 @@ function SlackIntegration() {
   const [reportType, setReportType] = useState("monthly_summary");
   const [sending, setSending] = useState(false);
 
-  const month: Month = "2026-02";
-  const kpi = calculateKPISummary(budgetsData as any[], actualsData as any[], transactionsData as any[], month, "2026-01");
-  const bva = calculateBudgetVsActual(budgetsData as any[], actualsData as any[], month);
+  const month: Month = "feb-2026";
+  const kpi = calculateKPISummary(budgets, actuals, transactions, month, "jan-2026");
+  const bva = calculateBudgetVsActual(budgets, actuals, month);
   const preview = buildSlackMessage(reportType, kpi, bva, MONTH_LABELS[month]);
 
   async function sendReport() {
@@ -340,7 +416,6 @@ function SlackIntegration() {
 
   return (
     <div className="grid grid-cols-2 gap-4">
-      {/* Config */}
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -374,6 +449,12 @@ function SlackIntegration() {
               </SelectContent>
             </Select>
           </div>
+          <div className="space-y-2">
+            <Label className="text-xs">Alert Thresholds</Label>
+            <p className="text-[10px] text-muted-foreground">
+              Auto-alert when department utilization exceeds 90% (warning) or 100% (critical)
+            </p>
+          </div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={testConnection} disabled={sending}>
               <TestTube2 className="h-3 w-3 mr-1" /> Test Connection
@@ -385,7 +466,6 @@ function SlackIntegration() {
         </CardContent>
       </Card>
 
-      {/* Preview */}
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium">Message Preview</CardTitle>
@@ -442,18 +522,29 @@ function ExportSection() {
     let csv = "";
     if (type === "budget") {
       csv = "Department,Month,Allocated\n";
-      budgetsData.forEach((b: any) => {
-        csv += `${b.departmentId},${b.month},${b.allocated}\n`;
+      Object.entries(budgets).forEach(([dept, months]) => {
+        Object.entries(months as Record<string, any>).forEach(([month, data]) => {
+          csv += `${dept},${month},${(data as any).allocated}\n`;
+        });
       });
     } else if (type === "transactions") {
-      csv = "Date,Department,Category,Description,Amount,PaymentType,Status\n";
-      transactionsData.forEach((t: any) => {
-        csv += `${t.date},${t.departmentId},${t.category},"${t.description}",${t.amount},${t.paymentType},${t.status}\n`;
+      csv = "Date,Department,Category,Applicant,Description,Amount,PaymentType,Type,Status\n";
+      transactions.forEach((t) => {
+        csv += `${t.date},${t.department},${t.category},"${t.applicant}","${t.description}",${t.amount},${t.paymentType},${t.type},${t.status}\n`;
       });
     } else if (type === "pl") {
       csv = "Category,SubCategory," + MONTHS.map((m) => MONTH_LABELS[m]).join(",") + "\n";
-      plEntries.forEach((e: any) => {
-        csv += `${e.category},${e.subCategory},` + MONTHS.map((m) => e.monthly[m] ?? 0).join(",") + "\n";
+      PL_STRUCTURE.forEach((cat) => {
+        csv += `${cat.label},Total,` + MONTHS.map((m) => {
+          const data = getNestedValue(pl, cat.key);
+          return data?.total?.[m] ?? 0;
+        }).join(",") + "\n";
+        cat.subcategories.forEach((sub) => {
+          csv += `${cat.label},${sub.label},` + MONTHS.map((m) => {
+            const data = getNestedValue(pl, cat.key);
+            return data?.[sub.key]?.[m] ?? 0;
+          }).join(",") + "\n";
+        });
       });
     }
 

@@ -1,41 +1,41 @@
 [
   {
-    "month": "2025-12",
+    "month": "dec-2025",
     "checks": [
-      {"id":1,"label":"Review all transactions","description":"Verify all transactions for the month are recorded and categorized","status":"completed","assignee":"Jenny Zhang","completedAt":"2026-01-05"},
-      {"id":2,"label":"Verify categorization","description":"Ensure all expenses are assigned to the correct department and category","status":"completed","assignee":"Jenny Zhang","completedAt":"2026-01-06"},
-      {"id":3,"label":"Resolve flagged transactions","description":"Review and resolve any flagged or suspicious transactions","status":"completed","assignee":"Mike Liu","completedAt":"2026-01-07"},
-      {"id":4,"label":"Reconcile crypto wallets","description":"Match on-chain USDT transfers with recorded transactions","status":"completed","assignee":"Kevin Li","completedAt":"2026-01-08"},
-      {"id":5,"label":"Verify credit card statements","description":"Reconcile credit card charges with recorded expenses","status":"completed","assignee":"Mike Liu","completedAt":"2026-01-08"},
+      {"id":1,"label":"Review all transactions","description":"Verify all transactions for the month are recorded and categorized","status":"completed","assignee":"Yutong Li","completedAt":"2026-01-05"},
+      {"id":2,"label":"Verify categorization","description":"Ensure all expenses are assigned to the correct department and category","status":"completed","assignee":"Yutong Li","completedAt":"2026-01-06"},
+      {"id":3,"label":"Resolve flagged transactions","description":"Review and resolve any flagged or suspicious transactions","status":"completed","assignee":"Yutong Li","completedAt":"2026-01-07"},
+      {"id":4,"label":"Reconcile crypto wallets","description":"Match on-chain USDT transfers with recorded transactions","status":"completed","assignee":"Yutong Li","completedAt":"2026-01-08"},
+      {"id":5,"label":"Verify credit card statements","description":"Reconcile credit card charges with recorded expenses","status":"completed","assignee":"Yutong Li","completedAt":"2026-01-08"},
       {"id":6,"label":"Department lead sign-off","description":"Obtain approval from each department lead on their spend","status":"completed","assignee":"All Leads","completedAt":"2026-01-09"},
-      {"id":7,"label":"Generate P&L statement","description":"Produce the monthly Profit & Loss statement","status":"completed","assignee":"Jenny Zhang","completedAt":"2026-01-10"},
-      {"id":8,"label":"Final approval","description":"CFO/CEO final sign-off on the month-end close","status":"completed","assignee":"CEO","completedAt":"2026-01-10"}
+      {"id":7,"label":"Generate P&L statement","description":"Produce the monthly Profit & Loss statement","status":"completed","assignee":"Yutong Li","completedAt":"2026-01-10"},
+      {"id":8,"label":"Final approval","description":"CFO/CEO final sign-off on the month-end close","status":"completed","assignee":"Chris Zhu","completedAt":"2026-01-10"}
     ]
   },
   {
-    "month": "2026-01",
+    "month": "jan-2026",
     "checks": [
-      {"id":1,"label":"Review all transactions","description":"Verify all transactions for the month are recorded and categorized","status":"completed","assignee":"Jenny Zhang","completedAt":"2026-02-03"},
-      {"id":2,"label":"Verify categorization","description":"Ensure all expenses are assigned to the correct department and category","status":"completed","assignee":"Jenny Zhang","completedAt":"2026-02-04"},
-      {"id":3,"label":"Resolve flagged transactions","description":"Review and resolve any flagged or suspicious transactions","status":"completed","assignee":"Mike Liu","completedAt":"2026-02-05"},
-      {"id":4,"label":"Reconcile crypto wallets","description":"Match on-chain USDT transfers with recorded transactions","status":"completed","assignee":"Kevin Li","completedAt":"2026-02-06"},
-      {"id":5,"label":"Verify credit card statements","description":"Reconcile credit card charges with recorded expenses","status":"completed","assignee":"Mike Liu","completedAt":"2026-02-06"},
+      {"id":1,"label":"Review all transactions","description":"Verify all transactions for the month are recorded and categorized","status":"completed","assignee":"Yutong Li","completedAt":"2026-02-03"},
+      {"id":2,"label":"Verify categorization","description":"Ensure all expenses are assigned to the correct department and category","status":"completed","assignee":"Yutong Li","completedAt":"2026-02-04"},
+      {"id":3,"label":"Resolve flagged transactions","description":"Review and resolve any flagged or suspicious transactions","status":"completed","assignee":"Yutong Li","completedAt":"2026-02-05"},
+      {"id":4,"label":"Reconcile crypto wallets","description":"Match on-chain USDT transfers with recorded transactions","status":"completed","assignee":"Yutong Li","completedAt":"2026-02-06"},
+      {"id":5,"label":"Verify credit card statements","description":"Reconcile credit card charges with recorded expenses","status":"completed","assignee":"Yutong Li","completedAt":"2026-02-06"},
       {"id":6,"label":"Department lead sign-off","description":"Obtain approval from each department lead on their spend","status":"in_progress","assignee":"All Leads"},
-      {"id":7,"label":"Generate P&L statement","description":"Produce the monthly Profit & Loss statement","status":"not_started","assignee":"Jenny Zhang"},
-      {"id":8,"label":"Final approval","description":"CFO/CEO final sign-off on the month-end close","status":"not_started","assignee":"CEO"}
+      {"id":7,"label":"Generate P&L statement","description":"Produce the monthly Profit & Loss statement","status":"not_started","assignee":"Yutong Li"},
+      {"id":8,"label":"Final approval","description":"CFO/CEO final sign-off on the month-end close","status":"not_started","assignee":"Chris Zhu"}
     ]
   },
   {
-    "month": "2026-02",
+    "month": "feb-2026",
     "checks": [
-      {"id":1,"label":"Review all transactions","description":"Verify all transactions for the month are recorded and categorized","status":"in_progress","assignee":"Jenny Zhang"},
-      {"id":2,"label":"Verify categorization","description":"Ensure all expenses are assigned to the correct department and category","status":"not_started","assignee":"Jenny Zhang"},
-      {"id":3,"label":"Resolve flagged transactions","description":"Review and resolve any flagged or suspicious transactions","status":"not_started","assignee":"Mike Liu"},
-      {"id":4,"label":"Reconcile crypto wallets","description":"Match on-chain USDT transfers with recorded transactions","status":"not_started","assignee":"Kevin Li"},
-      {"id":5,"label":"Verify credit card statements","description":"Reconcile credit card charges with recorded expenses","status":"not_started","assignee":"Mike Liu"},
+      {"id":1,"label":"Review all transactions","description":"Verify all transactions for the month are recorded and categorized","status":"in_progress","assignee":"Yutong Li"},
+      {"id":2,"label":"Verify categorization","description":"Ensure all expenses are assigned to the correct department and category","status":"not_started","assignee":"Yutong Li"},
+      {"id":3,"label":"Resolve flagged transactions","description":"Review and resolve any flagged or suspicious transactions","status":"not_started","assignee":"Yutong Li"},
+      {"id":4,"label":"Reconcile crypto wallets","description":"Match on-chain USDT transfers with recorded transactions","status":"not_started","assignee":"Yutong Li"},
+      {"id":5,"label":"Verify credit card statements","description":"Reconcile credit card charges with recorded expenses","status":"not_started","assignee":"Yutong Li"},
       {"id":6,"label":"Department lead sign-off","description":"Obtain approval from each department lead on their spend","status":"not_started","assignee":"All Leads"},
-      {"id":7,"label":"Generate P&L statement","description":"Produce the monthly Profit & Loss statement","status":"not_started","assignee":"Jenny Zhang"},
-      {"id":8,"label":"Final approval","description":"CFO/CEO final sign-off on the month-end close","status":"not_started","assignee":"CEO"}
+      {"id":7,"label":"Generate P&L statement","description":"Produce the monthly Profit & Loss statement","status":"not_started","assignee":"Yutong Li"},
+      {"id":8,"label":"Final approval","description":"CFO/CEO final sign-off on the month-end close","status":"not_started","assignee":"Chris Zhu"}
     ]
   }
 ]

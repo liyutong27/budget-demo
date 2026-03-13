@@ -7,63 +7,85 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { formatUSDT, formatPercent, formatMonth } from "@/lib/format";
-import { calculateBudgetVsActual, getActualsByDepartmentMonth } from "@/lib/calculations";
+import { formatUSDT, formatPercent, formatDate } from "@/lib/format";
+import { calculateBudgetVsActual, getActualTotal, getTransactionsForDepartmentMonth } from "@/lib/calculations";
 import { MONTHS, MONTH_LABELS, DEPARTMENTS, DEPARTMENT_MAP } from "@/lib/constants";
-import { Month, DepartmentId, BudgetAllocation } from "@/lib/types";
+import { Month, ActualsData, BudgetsData, Transaction } from "@/lib/types";
 import budgetsData from "@/data/budgets.json";
 import actualsData from "@/data/actuals.json";
-import { LayoutGrid, List, Plus, Pencil } from "lucide-react";
+import transactionsData from "@/data/transactions.json";
+import { LayoutGrid, List, Pencil, Eye, CheckCircle2, X } from "lucide-react";
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
 
+const actuals = actualsData as ActualsData;
+const allTransactions = transactionsData as Transaction[];
+
 export default function BudgetPage() {
-  const [selectedMonth, setSelectedMonth] = useState<Month>("2026-02");
+  const [selectedMonth, setSelectedMonth] = useState<Month>("feb-2026");
   const [viewMode, setViewMode] = useState<"table" | "cards">("table");
-  const [budgets, setBudgets] = useState<BudgetAllocation[]>(budgetsData as BudgetAllocation[]);
-  const [editingDept, setEditingDept] = useState<DepartmentId | null>(null);
-  const [editValues, setEditValues] = useState<Record<Month, number>>({} as Record<Month, number>);
+  const [budgets, setBudgets] = useState<BudgetsData>(budgetsData as BudgetsData);
+  const [editingDept, setEditingDept] = useState<string | null>(null);
+  const [editValues, setEditValues] = useState<Record<string, number>>({});
+  const [drillDept, setDrillDept] = useState<string | null>(null);
 
   const bva = useMemo(
-    () => calculateBudgetVsActual(budgets, actualsData as any[], selectedMonth),
+    () => calculateBudgetVsActual(budgets, actuals, selectedMonth),
     [budgets, selectedMonth]
   );
 
   const activeBva = bva.filter((r) => r.allocated > 0 || r.actual > 0);
 
-  function openEditor(deptId: DepartmentId) {
+  // Drill-down transactions for selected department
+  const drillTransactions = useMemo(() => {
+    if (!drillDept) return [];
+    return getTransactionsForDepartmentMonth(allTransactions, drillDept, selectedMonth)
+      .sort((a, b) => b.amount - a.amount);
+  }, [drillDept, selectedMonth]);
+
+  function openEditor(deptId: string) {
     const values: Record<string, number> = {};
     MONTHS.forEach((m) => {
-      const entry = budgets.find((b) => b.departmentId === deptId && b.month === m);
-      values[m] = entry?.allocated ?? 0;
+      values[m] = budgets[deptId]?.[m]?.allocated ?? 0;
     });
-    setEditValues(values as Record<Month, number>);
+    setEditValues(values);
     setEditingDept(deptId);
   }
 
   function saveBudget() {
     if (!editingDept) return;
-    const newBudgets = budgets.filter((b) => b.departmentId !== editingDept);
+    const newBudgets = { ...budgets };
+    if (!newBudgets[editingDept]) newBudgets[editingDept] = {};
     MONTHS.forEach((m) => {
       const val = editValues[m] ?? 0;
-      if (val > 0) {
-        newBudgets.push({ departmentId: editingDept, month: m, allocated: val });
-      }
+      newBudgets[editingDept][m] = {
+        allocated: val,
+        humanCapital: val * 0.7,
+        generalExpense: val * 0.3,
+      };
     });
     setBudgets(newBudgets);
     setEditingDept(null);
   }
 
-  // Chart data for selected department
+  // Quick resolve: mark flagged transaction as approved
+  function resolveTransaction(txnId: string) {
+    // In a real app this would call an API; here we just demonstrate the UI pattern
+    const idx = allTransactions.findIndex((t) => t.id === txnId);
+    if (idx !== -1) {
+      allTransactions[idx] = { ...allTransactions[idx], flagged: false, status: "approved" };
+    }
+    setDrillDept(drillDept); // force re-render
+  }
+
   const chartData = editingDept
     ? MONTHS.map((m) => ({
-        month: MONTH_LABELS[m].slice(0, 3),
+        month: (MONTH_LABELS[m] ?? m).slice(0, 3),
         budget: editValues[m] ?? 0,
-        actual: getActualsByDepartmentMonth(actualsData as any[], editingDept, m),
+        actual: getActualTotal(actuals, editingDept, m),
       }))
     : [];
 
@@ -107,7 +129,6 @@ export default function BudgetPage() {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            {/* Mini Chart Preview */}
             {editingDept && (
               <ResponsiveContainer width="100%" height={180}>
                 <BarChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
@@ -121,7 +142,6 @@ export default function BudgetPage() {
               </ResponsiveContainer>
             )}
 
-            {/* Monthly Allocation Grid */}
             <div className="grid grid-cols-1 gap-2">
               <div className="grid grid-cols-4 gap-2 text-xs font-medium text-muted-foreground px-1">
                 <span>Month</span>
@@ -130,9 +150,7 @@ export default function BudgetPage() {
                 <span>Variance</span>
               </div>
               {MONTHS.map((m) => {
-                const actual = editingDept
-                  ? getActualsByDepartmentMonth(actualsData as any[], editingDept, m)
-                  : 0;
+                const actual = editingDept ? getActualTotal(actuals, editingDept, m) : 0;
                 const alloc = editValues[m] ?? 0;
                 const variance = alloc - actual;
                 return (
@@ -162,7 +180,72 @@ export default function BudgetPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Table View */}
+      {/* Transaction Drill-Down Dialog */}
+      <Dialog open={!!drillDept} onOpenChange={(open) => !open && setDrillDept(null)}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {drillDept ? DEPARTMENT_MAP[drillDept]?.name : ""} - {MONTH_LABELS[selectedMonth]} Transactions
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            {drillTransactions.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4">No transactions found for this period.</p>
+            ) : (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b text-xs text-muted-foreground">
+                    <th className="text-left py-2 font-medium">Applicant</th>
+                    <th className="text-left py-2 font-medium">Category</th>
+                    <th className="text-left py-2 font-medium">Description</th>
+                    <th className="text-left py-2 font-medium">Type</th>
+                    <th className="text-right py-2 font-medium">Amount</th>
+                    <th className="text-center py-2 font-medium">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {drillTransactions.map((txn) => (
+                    <tr key={txn.id} className="border-b last:border-0 hover:bg-muted/50">
+                      <td className="py-2">{txn.applicant}</td>
+                      <td className="py-2 text-muted-foreground">{txn.category}</td>
+                      <td className="py-2 max-w-[200px] truncate">{txn.description}</td>
+                      <td className="py-2">
+                        <Badge variant="outline" className="text-[10px]">
+                          {txn.type === "human-capital" ? "HC" : "GE"}
+                        </Badge>
+                      </td>
+                      <td className="py-2 text-right font-mono">{formatUSDT(txn.amount)}</td>
+                      <td className="py-2 text-center">
+                        {txn.flagged ? (
+                          <div className="flex items-center gap-1 justify-center">
+                            <Badge variant="destructive" className="text-[10px]">flagged</Badge>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-1 text-green-600 hover:text-green-700"
+                              onClick={() => resolveTransaction(txn.id)}
+                              title="Quick resolve"
+                            >
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <Badge variant="secondary" className="text-[10px]">{txn.status}</Badge>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+            <div className="text-xs text-muted-foreground pt-2 border-t">
+              {drillTransactions.length} transactions | Total: {formatUSDT(drillTransactions.reduce((s, t) => s + t.amount, 0))}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Table View - Column order: Department | Allocated | Variance | Utilization | Actual | Status | Actions */}
       {viewMode === "table" && (
         <Card>
           <CardContent className="pt-4">
@@ -171,15 +254,15 @@ export default function BudgetPage() {
                 <tr className="border-b text-xs text-muted-foreground">
                   <th className="text-left py-2 font-medium">Department</th>
                   <th className="text-right py-2 font-medium">Allocated</th>
-                  <th className="text-right py-2 font-medium">Actual</th>
                   <th className="text-right py-2 font-medium">Variance</th>
                   <th className="text-left py-2 font-medium w-40">Utilization</th>
+                  <th className="text-right py-2 font-medium">Actual</th>
                   <th className="text-left py-2 font-medium">Status</th>
                   <th className="text-right py-2 font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {bva.map((row) => {
+                {activeBva.map((row) => {
                   const status =
                     row.utilization > 100 ? "Over Budget" : row.utilization > 90 ? "At Risk" : "On Track";
                   return (
@@ -191,9 +274,8 @@ export default function BudgetPage() {
                         </div>
                       </td>
                       <td className="py-3 text-right font-mono">{formatUSDT(row.allocated)}</td>
-                      <td className="py-3 text-right font-mono">{formatUSDT(row.actual)}</td>
                       <td className={`py-3 text-right font-mono ${row.variance >= 0 ? "text-green-600" : "text-red-600"}`}>
-                        {formatUSDT(row.variance)}
+                        {row.variance >= 0 ? "+" : ""}{formatUSDT(row.variance)}
                       </td>
                       <td className="py-3">
                         <div className="flex items-center gap-2">
@@ -206,6 +288,15 @@ export default function BudgetPage() {
                           </span>
                         </div>
                       </td>
+                      <td className="py-3 text-right font-mono">
+                        <button
+                          className="hover:underline hover:text-blue-600 cursor-pointer"
+                          onClick={() => setDrillDept(row.departmentId)}
+                          title="Click to view transactions"
+                        >
+                          {formatUSDT(row.actual)}
+                        </button>
+                      </td>
                       <td className="py-3">
                         <Badge
                           variant={status === "Over Budget" ? "destructive" : status === "At Risk" ? "secondary" : "outline"}
@@ -215,9 +306,14 @@ export default function BudgetPage() {
                         </Badge>
                       </td>
                       <td className="py-3 text-right">
-                        <Button variant="ghost" size="sm" onClick={() => openEditor(row.departmentId)}>
-                          <Pencil className="h-3 w-3" />
-                        </Button>
+                        <div className="flex items-center gap-1 justify-end">
+                          <Button variant="ghost" size="sm" onClick={() => setDrillDept(row.departmentId)} title="View transactions">
+                            <Eye className="h-3 w-3" />
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => openEditor(row.departmentId)} title="Edit budget">
+                            <Pencil className="h-3 w-3" />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -230,8 +326,8 @@ export default function BudgetPage() {
 
       {/* Cards View */}
       {viewMode === "cards" && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {bva.map((row) => {
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+          {activeBva.map((row) => {
             const status =
               row.utilization > 100 ? "Over Budget" : row.utilization > 90 ? "At Risk" : "On Track";
             return (
@@ -276,12 +372,19 @@ export default function BudgetPage() {
                     </div>
                     <div>
                       <p className="text-muted-foreground">Actual</p>
-                      <p className="font-mono font-medium">{formatUSDT(row.actual, true)}</p>
+                      <p className="font-mono font-medium cursor-pointer hover:text-blue-600" onClick={() => setDrillDept(row.departmentId)}>
+                        {formatUSDT(row.actual, true)}
+                      </p>
                     </div>
                   </div>
-                  <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => openEditor(row.departmentId)}>
-                    <Pencil className="h-3 w-3 mr-1" /> Edit Budget
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" className="flex-1 text-xs" onClick={() => setDrillDept(row.departmentId)}>
+                      <Eye className="h-3 w-3 mr-1" /> Details
+                    </Button>
+                    <Button variant="outline" size="sm" className="flex-1 text-xs" onClick={() => openEditor(row.departmentId)}>
+                      <Pencil className="h-3 w-3 mr-1" /> Edit
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             );

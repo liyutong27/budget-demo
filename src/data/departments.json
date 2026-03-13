@@ -1,10 +1,38 @@
 [
-  { "id": "aws-infrastructure", "name": "AWS & Infrastructure", "color": "#3b82f6", "lead": "Alex Chen" },
-  { "id": "community", "name": "Community", "color": "#8b5cf6", "lead": "Sarah Kim" },
-  { "id": "credit-card-subscription", "name": "Credit Card & Subscription", "color": "#f59e0b", "lead": "Mike Liu" },
-  { "id": "design", "name": "Design", "color": "#ec4899", "lead": "Lisa Park" },
-  { "id": "gtm", "name": "GTM", "color": "#14b8a6", "lead": "David Wang" },
-  { "id": "internal-operation", "name": "Internal Operation", "color": "#6366f1", "lead": "Jenny Zhang" },
-  { "id": "product", "name": "Product", "color": "#f97316", "lead": "Tom Wu" },
-  { "id": "tech", "name": "Tech", "color": "#06b6d4", "lead": "Kevin Li" }
+  {
+    "id": "tech",
+    "name": "Tech",
+    "color": "#3b82f6",
+    "lead": "Wenzhang Jian"
+  },
+  {
+    "id": "gtm",
+    "name": "GTM",
+    "color": "#8b5cf6",
+    "lead": "Ruqi Hu"
+  },
+  {
+    "id": "design",
+    "name": "Design",
+    "color": "#ec4899",
+    "lead": "Yi"
+  },
+  {
+    "id": "product",
+    "name": "Product",
+    "color": "#f97316",
+    "lead": "Wang Chenyu"
+  },
+  {
+    "id": "operations",
+    "name": "Operations",
+    "color": "#14b8a6",
+    "lead": "Yutong Li"
+  },
+  {
+    "id": "community",
+    "name": "Community",
+    "color": "#eab308",
+    "lead": "Javier"
+  }
 ]
