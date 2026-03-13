@@ -1,4 +1,4 @@
-import { Department, Month } from "./types";
+import { Department, Month, Quarter } from "./types";
 
 export const MONTHS: Month[] = [
   "may-2025", "jun-2025", "jul-2025", "aug-2025",
@@ -26,6 +26,23 @@ export const DEPARTMENTS: Department[] = departmentsData;
 export const DEPARTMENT_MAP: Record<string, Department> = Object.fromEntries(
   DEPARTMENTS.map((d) => [d.id, d])
 );
+
+// Quarter definitions
+export const QUARTERS: Record<Quarter, Month[]> = {
+  "Q2-2025": ["may-2025", "jun-2025"],
+  "Q3-2025": ["jul-2025", "aug-2025", "sep-2025"],
+  "Q4-2025": ["oct-2025", "nov-2025", "dec-2025"],
+  "Q1-2026": ["jan-2026", "feb-2026"],
+};
+
+export const QUARTER_LIST: Quarter[] = ["Q2-2025", "Q3-2025", "Q4-2025", "Q1-2026"];
+
+export const QUARTER_LABELS: Record<Quarter, string> = {
+  "Q2-2025": "Q2 2025",
+  "Q3-2025": "Q3 2025",
+  "Q4-2025": "Q4 2025",
+  "Q1-2026": "Q1 2026",
+};
 
 export const CHART_COLORS = {
   budget: "#9997FF",

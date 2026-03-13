@@ -100,3 +100,26 @@ export interface SlackConfig {
 }
 
 export type Role = "admin" | "finance" | "dept_lead" | "viewer";
+
+// Time period types
+export type Quarter = "Q2-2025" | "Q3-2025" | "Q4-2025" | "Q1-2026";
+export type TimePeriodMode = "month" | "quarter" | "ytd";
+
+export interface SpendBreakdown {
+  humanCapital: number;
+  generalExpense: number;
+  total: number;
+}
+
+export interface GEBudgetRow {
+  departmentId: string;
+  departmentName: string;
+  color: string;
+  lead: string;
+  geBudget: number;
+  geActual: number;
+  geVariance: number;
+  geUtilization: number;
+  hcActual: number;
+  totalActual: number;
+}

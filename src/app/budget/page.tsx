@@ -2,21 +2,29 @@
 
 import { Fragment, useMemo, useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { formatUSDT, formatPercent, formatDate } from "@/lib/format";
-import { calculateBudgetVsActual, getActualTotal, getTransactionsForDepartmentMonth } from "@/lib/calculations";
-import { MONTHS, MONTH_LABELS, DEPARTMENTS, DEPARTMENT_MAP } from "@/lib/constants";
-import { Month, ActualsData, BudgetsData, Transaction } from "@/lib/types";
+import { formatUSDT, formatPercent } from "@/lib/format";
+import {
+  calculateGEBudgetRows,
+  aggregateActuals,
+  aggregateBudgets,
+  getMonthsForPeriod,
+  getPreviousPeriod,
+  getTransactionsForDepartmentMonths,
+  getActualTotal,
+} from "@/lib/calculations";
+import { MONTHS, MONTH_LABELS, DEPARTMENTS, DEPARTMENT_MAP, QUARTER_LIST, QUARTER_LABELS } from "@/lib/constants";
+import { Month, ActualsData, BudgetsData, Transaction, TimePeriodMode, Quarter, GEBudgetRow } from "@/lib/types";
 import budgetsData from "@/data/budgets.json";
 import actualsData from "@/data/actuals.json";
 import transactionsData from "@/data/transactions.json";
-import { LayoutGrid, List, Pencil, CheckCircle2, ChevronDown, ChevronRight } from "lucide-react";
+import { Pencil, CheckCircle2, ChevronDown, ChevronRight } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
@@ -25,31 +33,71 @@ const actuals = actualsData as ActualsData;
 const allTransactions = transactionsData as Transaction[];
 
 export default function BudgetPage() {
-  const [selectedMonth, setSelectedMonth] = useState<Month>("feb-2026");
-  const [viewMode, setViewMode] = useState<"table" | "cards">("table");
-  const [budgets, setBudgets] = useState<BudgetsData>(budgetsData as BudgetsData);
+  const [periodMode, setPeriodMode] = useState<TimePeriodMode>("month");
+  const [periodValue, setPeriodValue] = useState<string>("feb-2026");
+  const [activeTab, setActiveTab] = useState<"ge" | "hc">("ge");
+  const [expandedDept, setExpandedDept] = useState<string | null>(null);
   const [editingDept, setEditingDept] = useState<string | null>(null);
   const [editValues, setEditValues] = useState<Record<string, number>>({});
-  const [expandedDept, setExpandedDept] = useState<string | null>(null);
+  const [budgets, setBudgets] = useState<BudgetsData>(budgetsData as BudgetsData);
+  const [, setRenderTick] = useState(0);
 
-  const bva = useMemo(
-    () => calculateBudgetVsActual(budgets, actuals, selectedMonth),
-    [budgets, selectedMonth]
-  );
+  const months = useMemo(() => getMonthsForPeriod(periodMode, periodValue), [periodMode, periodValue]);
+  const geRows = useMemo(() => calculateGEBudgetRows(budgets, actuals, months), [budgets, actuals, months]);
 
-  const activeBva = bva.filter((r) => r.allocated > 0 || r.actual > 0);
+  // Period label for header
+  const periodLabel = periodMode === "month"
+    ? MONTH_LABELS[periodValue as Month] ?? periodValue
+    : QUARTER_LABELS[periodValue as Quarter] ?? periodValue;
 
-  // Inline drill-down transactions for expanded department
+  // ─── GE Summary KPIs ────────────────────────────────────────
+  const geSummary = useMemo(() => {
+    const totalBudget = geRows.reduce((s, r) => s + r.geBudget, 0);
+    const totalActual = geRows.reduce((s, r) => s + r.geActual, 0);
+    const utilization = totalBudget > 0 ? (totalActual / totalBudget) * 100 : 0;
+    return { totalBudget, totalActual, utilization };
+  }, [geRows]);
+
+  // ─── HC Summary KPIs ────────────────────────────────────────
+  const hcSummary = useMemo(() => {
+    let totalHCBudget = 0;
+    let totalHCActual = 0;
+    DEPARTMENTS.forEach((dept) => {
+      const bud = aggregateBudgets(budgets, dept.id, months);
+      const act = aggregateActuals(actuals, dept.id, months);
+      totalHCBudget += bud.hc;
+      totalHCActual += act.humanCapital;
+    });
+
+    // Previous period for comparison
+    const prev = getPreviousPeriod(periodMode, periodValue);
+    let prevHCActual = 0;
+    if (prev) {
+      const prevMonths = getMonthsForPeriod(prev.mode, prev.value);
+      DEPARTMENTS.forEach((dept) => {
+        const act = aggregateActuals(actuals, dept.id, prevMonths);
+        prevHCActual += act.humanCapital;
+      });
+    }
+    const periodChange = prevHCActual > 0 ? ((totalHCActual - prevHCActual) / prevHCActual) * 100 : 0;
+    const avgPerDept = DEPARTMENTS.length > 0 ? totalHCActual / DEPARTMENTS.length : 0;
+
+    return { totalHCBudget, totalHCActual, periodChange, avgPerDept, hasPrevious: !!prev };
+  }, [budgets, months, periodMode, periodValue]);
+
+  // ─── Expanded GE transactions (only general-expense type) ───
   const expandedTransactions = useMemo(() => {
     if (!expandedDept) return [];
-    return getTransactionsForDepartmentMonth(allTransactions, expandedDept, selectedMonth)
+    return getTransactionsForDepartmentMonths(allTransactions, expandedDept, months)
+      .filter((t) => t.type === "general-expense")
       .sort((a, b) => b.amount - a.amount);
-  }, [expandedDept, selectedMonth]);
+  }, [expandedDept, months]);
 
+  // ─── Budget Editor ──────────────────────────────────────────
   function openEditor(deptId: string) {
     const values: Record<string, number> = {};
     MONTHS.forEach((m) => {
-      values[m] = budgets[deptId]?.[m]?.allocated ?? 0;
+      values[m] = budgets[deptId]?.[m]?.generalExpense ?? 0;
     });
     setEditValues(values);
     setEditingDept(deptId);
@@ -60,27 +108,24 @@ export default function BudgetPage() {
     const newBudgets = { ...budgets };
     if (!newBudgets[editingDept]) newBudgets[editingDept] = {};
     MONTHS.forEach((m) => {
-      const val = editValues[m] ?? 0;
+      const geVal = editValues[m] ?? 0;
+      const existing = newBudgets[editingDept][m];
+      const hcVal = existing?.humanCapital ?? 0;
       newBudgets[editingDept][m] = {
-        allocated: val,
-        humanCapital: val * 0.7,
-        generalExpense: val * 0.3,
+        allocated: geVal + hcVal,
+        humanCapital: hcVal,
+        generalExpense: geVal,
       };
     });
     setBudgets(newBudgets);
     setEditingDept(null);
   }
 
-  // Counter to force re-render when transactions are mutated
-  const [, setRenderTick] = useState(0);
-
-  // Quick resolve: mark flagged transaction as approved
   function resolveTransaction(txnId: string) {
     const idx = allTransactions.findIndex((t) => t.id === txnId);
     if (idx !== -1) {
       allTransactions[idx] = { ...allTransactions[idx], flagged: false, status: "approved" };
     }
-    // Force re-render
     setRenderTick((t) => t + 1);
   }
 
@@ -88,51 +133,377 @@ export default function BudgetPage() {
     setExpandedDept((prev) => (prev === deptId ? null : deptId));
   }
 
+  // Chart data for editor (GE only)
   const chartData = editingDept
-    ? MONTHS.map((m) => ({
-        month: (MONTH_LABELS[m] ?? m).slice(0, 3),
-        budget: editValues[m] ?? 0,
-        actual: getActualTotal(actuals, editingDept, m),
-      }))
+    ? MONTHS.map((m) => {
+        const geActual = actuals[editingDept]?.[m]?.generalExpense ?? 0;
+        return {
+          month: (MONTH_LABELS[m] ?? m).slice(0, 3),
+          budget: editValues[m] ?? 0,
+          actual: geActual,
+        };
+      })
     : [];
+
+  // ─── HC rows per department ─────────────────────────────────
+  const hcRows = useMemo(() => {
+    return DEPARTMENTS.map((dept) => {
+      const bud = aggregateBudgets(budgets, dept.id, months);
+      const act = aggregateActuals(actuals, dept.id, months);
+      const variance = bud.hc - act.humanCapital;
+      return {
+        departmentId: dept.id,
+        departmentName: dept.name,
+        color: dept.color,
+        lead: dept.lead,
+        hcBudget: bud.hc,
+        hcActual: act.humanCapital,
+        variance,
+      };
+    }).filter((r) => r.hcBudget > 0 || r.hcActual > 0);
+  }, [budgets, months]);
 
   return (
     <div>
-      <PageHeader title="Budgets" description={`Budget management - ${MONTH_LABELS[selectedMonth]}`}>
-        <div className="flex items-center gap-2">
-          <Button
-            variant={viewMode === "table" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setViewMode("table")}
-          >
-            <List className="h-4 w-4" />
-          </Button>
-          <Button
-            variant={viewMode === "cards" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setViewMode("cards")}
-          >
-            <LayoutGrid className="h-4 w-4" />
-          </Button>
-          <Select value={selectedMonth} onValueChange={(v) => setSelectedMonth(v as Month)}>
-            <SelectTrigger className="w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {MONTHS.map((m) => (
-                <SelectItem key={m} value={m}>{MONTH_LABELS[m]}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      <PageHeader title="Budgets" description={`Budget management - ${periodLabel}`}>
+        <div className="flex items-center gap-3">
+          {/* Tab Buttons */}
+          <div className="flex items-center rounded-lg border border-[#1e1e3a] overflow-hidden">
+            <button
+              onClick={() => { setActiveTab("ge"); setExpandedDept(null); }}
+              className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                activeTab === "ge"
+                  ? "bg-[rgba(153,151,255,0.12)] text-[#ACAAFF]"
+                  : "text-[#6b6b9a] hover:text-[#e8e8ff]"
+              }`}
+            >
+              Expense Budget
+            </button>
+            <button
+              onClick={() => { setActiveTab("hc"); setExpandedDept(null); }}
+              className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                activeTab === "hc"
+                  ? "bg-[rgba(153,151,255,0.12)] text-[#ACAAFF]"
+                  : "text-[#6b6b9a] hover:text-[#e8e8ff]"
+              }`}
+            >
+              Headcount
+            </button>
+          </div>
+
+          {/* Period Mode Toggle */}
+          <div className="flex items-center rounded-lg border border-[#1e1e3a] overflow-hidden">
+            <button
+              onClick={() => { setPeriodMode("month"); setPeriodValue("feb-2026"); }}
+              className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                periodMode === "month"
+                  ? "bg-[rgba(153,151,255,0.12)] text-[#ACAAFF]"
+                  : "text-[#6b6b9a] hover:text-[#e8e8ff]"
+              }`}
+            >
+              Month
+            </button>
+            <button
+              onClick={() => { setPeriodMode("quarter"); setPeriodValue("Q1-2026"); }}
+              className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                periodMode === "quarter"
+                  ? "bg-[rgba(153,151,255,0.12)] text-[#ACAAFF]"
+                  : "text-[#6b6b9a] hover:text-[#e8e8ff]"
+              }`}
+            >
+              Quarter
+            </button>
+          </div>
+
+          {/* Period Value Dropdown */}
+          {periodMode === "month" ? (
+            <Select value={periodValue} onValueChange={(v) => setPeriodValue(v)}>
+              <SelectTrigger className="w-36">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {MONTHS.map((m) => (
+                  <SelectItem key={m} value={m}>{MONTH_LABELS[m]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <Select value={periodValue} onValueChange={(v) => setPeriodValue(v)}>
+              <SelectTrigger className="w-36">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {QUARTER_LIST.map((q) => (
+                  <SelectItem key={q} value={q}>{QUARTER_LABELS[q]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
       </PageHeader>
 
-      {/* Budget Editor Dialog */}
+      {/* ═══════════════════ GE TAB ═══════════════════ */}
+      {activeTab === "ge" && (
+        <>
+          {/* GE KPI Summary Cards */}
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <Card className="bg-[#0f0f22] border border-[#1e1e3a] rounded-xl">
+              <CardContent className="pt-5 pb-4">
+                <p className="text-[10px] text-[#5a5a80] uppercase tracking-wider mb-1">Total GE Budget</p>
+                <p className="text-xl font-bold font-mono text-[#e8e8ff]">{formatUSDT(geSummary.totalBudget, true)}</p>
+              </CardContent>
+            </Card>
+            <Card className="bg-[#0f0f22] border border-[#1e1e3a] rounded-xl">
+              <CardContent className="pt-5 pb-4">
+                <p className="text-[10px] text-[#5a5a80] uppercase tracking-wider mb-1">Total GE Spend</p>
+                <p className="text-xl font-bold font-mono text-[#e8e8ff]">{formatUSDT(geSummary.totalActual, true)}</p>
+              </CardContent>
+            </Card>
+            <Card className="bg-[#0f0f22] border border-[#1e1e3a] rounded-xl">
+              <CardContent className="pt-5 pb-4">
+                <p className="text-[10px] text-[#5a5a80] uppercase tracking-wider mb-1">GE Utilization</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-xl font-bold font-mono text-[#e8e8ff]">{geSummary.utilization.toFixed(1)}%</p>
+                  <Progress value={Math.min(geSummary.utilization, 100)} className="h-2 flex-1" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* GE Main Table */}
+          <Card className="bg-[#0f0f22] border border-[#1e1e3a]">
+            <CardContent className="pt-4">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-[#1e1e3a] text-[10px] text-[#5a5a80] uppercase tracking-wider">
+                    <th className="text-left py-2 font-medium">Department</th>
+                    <th className="text-right py-2 font-medium">GE Budget</th>
+                    <th className="text-right py-2 font-medium">GE Actual</th>
+                    <th className="text-right py-2 font-medium">Variance</th>
+                    <th className="text-left py-2 font-medium w-40">Utilization</th>
+                    <th className="text-left py-2 font-medium">Status</th>
+                    <th className="text-right py-2 font-medium">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {geRows
+                    .filter((r) => r.geBudget > 0 || r.geActual > 0)
+                    .map((row) => {
+                      const status =
+                        row.geUtilization > 100 ? "Over Budget" : row.geUtilization > 90 ? "At Risk" : "On Track";
+                      const isExpanded = expandedDept === row.departmentId;
+                      const deptTransactions = isExpanded ? expandedTransactions : [];
+                      return (
+                        <Fragment key={row.departmentId}>
+                          <tr
+                            className="border-b border-[#1e1e3a] last:border-0 hover:bg-[rgba(153,151,255,0.06)] transition-colors cursor-pointer group"
+                            onClick={() => toggleExpand(row.departmentId)}
+                          >
+                            <td className="py-4">
+                              <div className="flex items-center gap-2">
+                                {isExpanded ? (
+                                  <ChevronDown className="h-3.5 w-3.5 text-[#ACAAFF]" />
+                                ) : (
+                                  <ChevronRight className="h-3.5 w-3.5 text-[#6b6b9a] group-hover:text-[#ACAAFF] transition-colors" />
+                                )}
+                                <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: row.color }} />
+                                <div>
+                                  <span className="font-medium text-[#e8e8ff]">{row.departmentName}</span>
+                                  <p className="text-[10px] text-[#5a5a80] mt-0.5">{row.lead}</p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="py-4 text-right font-mono text-[#e8e8ff]">{formatUSDT(row.geBudget)}</td>
+                            <td className="py-4 text-right font-mono text-[#e8e8ff]">{formatUSDT(row.geActual)}</td>
+                            <td className={`py-4 text-right font-mono ${row.geVariance >= 0 ? "text-green-400" : "text-red-400"}`}>
+                              {row.geVariance >= 0 ? "+" : ""}{formatUSDT(row.geVariance)}
+                            </td>
+                            <td className="py-4">
+                              <div className="flex items-center gap-2">
+                                <Progress
+                                  value={Math.min(row.geUtilization, 100)}
+                                  className="h-2 w-24"
+                                />
+                                <span className="text-xs text-[#6b6b9a] w-12">
+                                  {row.geUtilization.toFixed(0)}%
+                                </span>
+                              </div>
+                            </td>
+                            <td className="py-4">
+                              <span
+                                className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium ${
+                                  status === "Over Budget"
+                                    ? "bg-[rgba(255,107,107,0.12)] text-[#ff6b6b] border-[rgba(255,107,107,0.2)]"
+                                    : status === "At Risk"
+                                    ? "bg-[rgba(255,184,108,0.12)] text-[#ffb86c] border-[rgba(255,184,108,0.2)]"
+                                    : "bg-[rgba(80,250,123,0.12)] text-[#50fa7b] border-[rgba(80,250,123,0.2)]"
+                                }`}
+                              >
+                                {status}
+                              </span>
+                            </td>
+                            <td className="py-4 text-right">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => { e.stopPropagation(); openEditor(row.departmentId); }}
+                                title="Edit GE budget"
+                                className="text-[#6b6b9a] hover:text-[#e8e8ff] hover:bg-[rgba(153,151,255,0.06)]"
+                              >
+                                <Pencil className="h-3 w-3" />
+                              </Button>
+                            </td>
+                          </tr>
+                          {/* Inline expanded GE transactions */}
+                          {isExpanded && (
+                            <tr>
+                              <td colSpan={7} className="p-0">
+                                <div className="bg-[#0a0a1a] border-y border-[#1e1e3a] border-l-2 border-l-[#9997FF] px-6 py-4">
+                                  {deptTransactions.length === 0 ? (
+                                    <p className="text-sm text-[#6b6b9a] py-2">No general expense transactions found for this period.</p>
+                                  ) : (
+                                    <>
+                                      <table className="w-full text-sm">
+                                        <thead>
+                                          <tr className="border-b border-[#1e1e3a] text-xs text-[#6b6b9a]">
+                                            <th className="text-left py-2 font-medium">Applicant</th>
+                                            <th className="text-left py-2 font-medium">Category</th>
+                                            <th className="text-left py-2 font-medium">Description</th>
+                                            <th className="text-right py-2 font-medium">Amount</th>
+                                            <th className="text-center py-2 font-medium">Status</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody>
+                                          {deptTransactions.map((txn) => (
+                                            <tr key={txn.id} className="border-b border-[#1e1e3a] last:border-0 hover:bg-[rgba(153,151,255,0.06)]">
+                                              <td className="py-2 text-[#e8e8ff]">{txn.applicant}</td>
+                                              <td className="py-2 text-[#6b6b9a]">{txn.category}</td>
+                                              <td className="py-2 max-w-[200px] truncate text-[#e8e8ff]">{txn.description}</td>
+                                              <td className="py-2 text-right font-mono text-[#e8e8ff]">{formatUSDT(txn.amount)}</td>
+                                              <td className="py-2 text-center">
+                                                {txn.flagged ? (
+                                                  <div className="flex items-center gap-2 justify-center">
+                                                    <Badge variant="destructive" className="text-[10px]">flagged</Badge>
+                                                    <Button
+                                                      size="sm"
+                                                      className="h-6 px-2 text-xs bg-green-600 text-white hover:bg-green-700"
+                                                      onClick={() => resolveTransaction(txn.id)}
+                                                    >
+                                                      <CheckCircle2 className="h-3 w-3 mr-1" />
+                                                      Resolve
+                                                    </Button>
+                                                  </div>
+                                                ) : (
+                                                  <Badge variant="secondary" className="text-[10px]">{txn.status}</Badge>
+                                                )}
+                                              </td>
+                                            </tr>
+                                          ))}
+                                        </tbody>
+                                      </table>
+                                      <div className="text-xs text-[#6b6b9a] pt-3 mt-2 border-t border-[#1e1e3a]">
+                                        {deptTransactions.length} transactions | Total: {formatUSDT(deptTransactions.reduce((s, t) => s + t.amount, 0))}
+                                      </div>
+                                    </>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </Fragment>
+                      );
+                    })}
+                </tbody>
+              </table>
+              <p className="text-[11px] text-[#5a5a80] mt-4 text-center">Click any department row to view general expense transactions</p>
+            </CardContent>
+          </Card>
+        </>
+      )}
+
+      {/* ═══════════════════ HC TAB ═══════════════════ */}
+      {activeTab === "hc" && (
+        <>
+          {/* HC KPI Summary Cards */}
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <Card className="bg-[#0f0f22] border border-[#1e1e3a] rounded-xl">
+              <CardContent className="pt-5 pb-4">
+                <p className="text-[10px] text-[#5a5a80] uppercase tracking-wider mb-1">Total HC Cost</p>
+                <p className="text-xl font-bold font-mono text-[#e8e8ff]">{formatUSDT(hcSummary.totalHCActual, true)}</p>
+              </CardContent>
+            </Card>
+            <Card className="bg-[#0f0f22] border border-[#1e1e3a] rounded-xl">
+              <CardContent className="pt-5 pb-4">
+                <p className="text-[10px] text-[#5a5a80] uppercase tracking-wider mb-1">vs Previous Period</p>
+                {hcSummary.hasPrevious ? (
+                  <p className={`text-xl font-bold font-mono ${hcSummary.periodChange >= 0 ? "text-red-400" : "text-green-400"}`}>
+                    {formatPercent(hcSummary.periodChange)}
+                  </p>
+                ) : (
+                  <p className="text-xl font-bold font-mono text-[#5a5a80]">--</p>
+                )}
+              </CardContent>
+            </Card>
+            <Card className="bg-[#0f0f22] border border-[#1e1e3a] rounded-xl">
+              <CardContent className="pt-5 pb-4">
+                <p className="text-[10px] text-[#5a5a80] uppercase tracking-wider mb-1">Avg HC per Department</p>
+                <p className="text-xl font-bold font-mono text-[#e8e8ff]">{formatUSDT(hcSummary.avgPerDept, true)}</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* HC Main Table (read-only) */}
+          <Card className="bg-[#0f0f22] border border-[#1e1e3a]">
+            <CardContent className="pt-4">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-[#1e1e3a] text-[10px] text-[#5a5a80] uppercase tracking-wider">
+                    <th className="text-left py-2 font-medium">Department</th>
+                    <th className="text-right py-2 font-medium">HC Budget</th>
+                    <th className="text-right py-2 font-medium">HC Actual</th>
+                    <th className="text-right py-2 font-medium">Variance</th>
+                    <th className="text-right py-2 font-medium">Headcount Cost</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {hcRows.map((row) => (
+                    <tr
+                      key={row.departmentId}
+                      className="border-b border-[#1e1e3a] last:border-0"
+                    >
+                      <td className="py-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: row.color }} />
+                          <div>
+                            <span className="font-medium text-[#e8e8ff]">{row.departmentName}</span>
+                            <p className="text-[10px] text-[#5a5a80] mt-0.5">{row.lead}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-4 text-right font-mono text-[#e8e8ff]">{formatUSDT(row.hcBudget)}</td>
+                      <td className="py-4 text-right font-mono text-[#e8e8ff]">{formatUSDT(row.hcActual)}</td>
+                      <td className={`py-4 text-right font-mono ${row.variance >= 0 ? "text-green-400" : "text-red-400"}`}>
+                        {row.variance >= 0 ? "+" : ""}{formatUSDT(row.variance)}
+                      </td>
+                      <td className="py-4 text-right font-mono text-[#e8e8ff]">{formatUSDT(row.hcActual)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <p className="text-[11px] text-[#5a5a80] mt-4 text-center border-t border-[#1e1e3a] pt-3">
+                Headcount costs are managed by Finance. Contact finance@donut.xyz for adjustments.
+              </p>
+            </CardContent>
+          </Card>
+        </>
+      )}
+
+      {/* ═══════════════════ GE Budget Editor Dialog ═══════════════════ */}
       <Dialog open={!!editingDept} onOpenChange={(open) => !open && setEditingDept(null)}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto bg-[#0f0f22] border-[#1e1e3a] text-[#e8e8ff]">
           <DialogHeader>
             <DialogTitle className="text-[#e8e8ff]">
-              Edit Budget - {editingDept ? DEPARTMENT_MAP[editingDept]?.name : ""}
+              Edit GE Budget - {editingDept ? DEPARTMENT_MAP[editingDept]?.name : ""}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
@@ -147,8 +518,8 @@ export default function BudgetPage() {
                     contentStyle={{ backgroundColor: "#0f0f22", border: "1px solid #1e1e3a", color: "#e8e8ff" }}
                     labelStyle={{ color: "#6b6b9a" }}
                   />
-                  <Bar dataKey="budget" name="Budget" fill="#9997FF" radius={[3, 3, 0, 0]} />
-                  <Bar dataKey="actual" name="Actual" fill="#22c55e" radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="budget" name="GE Budget" fill="#9997FF" radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="actual" name="GE Actual" fill="#22c55e" radius={[3, 3, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -156,14 +527,14 @@ export default function BudgetPage() {
             <div className="grid grid-cols-1 gap-2">
               <div className="grid grid-cols-4 gap-2 text-xs font-medium text-[#6b6b9a] px-1">
                 <span>Month</span>
-                <span>Allocated (USDT)</span>
-                <span>Actual</span>
+                <span>GE Budget (USDT)</span>
+                <span>GE Actual</span>
                 <span>Variance</span>
               </div>
               {MONTHS.map((m) => {
-                const actual = editingDept ? getActualTotal(actuals, editingDept, m) : 0;
+                const geActual = editingDept ? (actuals[editingDept]?.[m]?.generalExpense ?? 0) : 0;
                 const alloc = editValues[m] ?? 0;
-                const variance = alloc - actual;
+                const variance = alloc - geActual;
                 return (
                   <div key={m} className="grid grid-cols-4 gap-2 items-center">
                     <span className="text-sm text-[#e8e8ff]">{MONTH_LABELS[m]}</span>
@@ -175,7 +546,7 @@ export default function BudgetPage() {
                       }
                       className="h-8 text-sm bg-[#0a0a1a] border-[#1e1e3a] text-[#e8e8ff]"
                     />
-                    <span className="text-sm text-[#6b6b9a]">{formatUSDT(actual)}</span>
+                    <span className="text-sm text-[#6b6b9a]">{formatUSDT(geActual)}</span>
                     <span className={`text-sm ${variance >= 0 ? "text-green-400" : "text-red-400"}`}>
                       {formatUSDT(variance)}
                     </span>
@@ -190,277 +561,6 @@ export default function BudgetPage() {
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* Table View - Column order: Department | Allocated | Variance | Utilization | Actual | Status | Actions */}
-      {viewMode === "table" && (
-        <Card className="bg-[#0f0f22] border border-[#1e1e3a]">
-          <CardContent className="pt-4">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-[#1e1e3a] text-[10px] text-[#5a5a80] uppercase tracking-wider">
-                  <th className="text-left py-2 font-medium">Department</th>
-                  <th className="text-right py-2 font-medium">Allocated</th>
-                  <th className="text-right py-2 font-medium">Variance</th>
-                  <th className="text-left py-2 font-medium w-40">Utilization</th>
-                  <th className="text-right py-2 font-medium">Actual</th>
-                  <th className="text-left py-2 font-medium">Status</th>
-                  <th className="text-right py-2 font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {activeBva.map((row) => {
-                  const status =
-                    row.utilization > 100 ? "Over Budget" : row.utilization > 90 ? "At Risk" : "On Track";
-                  const isExpanded = expandedDept === row.departmentId;
-                  const deptTransactions = isExpanded ? expandedTransactions : [];
-                  return (
-                    <Fragment key={row.departmentId}>
-                      <tr
-                        className="border-b border-[#1e1e3a] last:border-0 hover:bg-[rgba(153,151,255,0.06)] transition-colors cursor-pointer group"
-                        onClick={() => toggleExpand(row.departmentId)}
-                      >
-                        <td className="py-4">
-                          <div className="flex items-center gap-2">
-                            {isExpanded ? (
-                              <ChevronDown className="h-3.5 w-3.5 text-[#ACAAFF]" />
-                            ) : (
-                              <ChevronRight className="h-3.5 w-3.5 text-[#6b6b9a] group-hover:text-[#ACAAFF] transition-colors" />
-                            )}
-                            <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: row.color }} />
-                            <div>
-                              <span className="font-medium text-[#e8e8ff]">{row.departmentName}</span>
-                              <p className="text-[10px] text-[#5a5a80] mt-0.5">{DEPARTMENT_MAP[row.departmentId]?.lead}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-4 text-right font-mono text-[#e8e8ff]">{formatUSDT(row.allocated)}</td>
-                        <td className={`py-4 text-right font-mono ${row.variance >= 0 ? "text-green-400" : "text-red-400"}`}>
-                          {row.variance >= 0 ? "+" : ""}{formatUSDT(row.variance)}
-                        </td>
-                        <td className="py-4">
-                          <div className="flex items-center gap-2">
-                            <Progress
-                              value={Math.min(row.utilization, 100)}
-                              className="h-2 w-24"
-                            />
-                            <span className="text-xs text-[#6b6b9a] w-12">
-                              {row.utilization.toFixed(0)}%
-                            </span>
-                          </div>
-                        </td>
-                        <td className="py-4 text-right font-mono text-[#e8e8ff]">
-                          {formatUSDT(row.actual)}
-                        </td>
-                        <td className="py-4">
-                          <span
-                            className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium ${
-                              status === "Over Budget"
-                                ? "bg-[rgba(255,107,107,0.12)] text-[#ff6b6b] border-[rgba(255,107,107,0.2)]"
-                                : status === "At Risk"
-                                ? "bg-[rgba(255,184,108,0.12)] text-[#ffb86c] border-[rgba(255,184,108,0.2)]"
-                                : "bg-[rgba(80,250,123,0.12)] text-[#50fa7b] border-[rgba(80,250,123,0.2)]"
-                            }`}
-                          >
-                            {status}
-                          </span>
-                        </td>
-                        <td className="py-4 text-right">
-                          <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openEditor(row.departmentId); }} title="Edit budget" className="text-[#6b6b9a] hover:text-[#e8e8ff] hover:bg-[rgba(153,151,255,0.06)]">
-                            <Pencil className="h-3 w-3" />
-                          </Button>
-                        </td>
-                      </tr>
-                      {/* Inline expanded transactions */}
-                      {isExpanded && (
-                        <tr>
-                          <td colSpan={7} className="p-0">
-                            <div className="bg-[#0a0a1a] border-y border-[#1e1e3a] border-l-2 border-l-[#9997FF] px-6 py-4">
-                              {deptTransactions.length === 0 ? (
-                                <p className="text-sm text-[#6b6b9a] py-2">No transactions found for this period.</p>
-                              ) : (
-                                <>
-                                  <table className="w-full text-sm">
-                                    <thead>
-                                      <tr className="border-b border-[#1e1e3a] text-xs text-[#6b6b9a]">
-                                        <th className="text-left py-2 font-medium">Applicant</th>
-                                        <th className="text-left py-2 font-medium">Category</th>
-                                        <th className="text-left py-2 font-medium">Description</th>
-                                        <th className="text-right py-2 font-medium">Amount</th>
-                                        <th className="text-center py-2 font-medium">Status</th>
-                                      </tr>
-                                    </thead>
-                                    <tbody>
-                                      {deptTransactions.map((txn) => (
-                                        <tr key={txn.id} className="border-b border-[#1e1e3a] last:border-0 hover:bg-[rgba(153,151,255,0.06)]">
-                                          <td className="py-2 text-[#e8e8ff]">{txn.applicant}</td>
-                                          <td className="py-2 text-[#6b6b9a]">{txn.category}</td>
-                                          <td className="py-2 max-w-[200px] truncate text-[#e8e8ff]">{txn.description}</td>
-                                          <td className="py-2 text-right font-mono text-[#e8e8ff]">{formatUSDT(txn.amount)}</td>
-                                          <td className="py-2 text-center">
-                                            {txn.flagged ? (
-                                              <div className="flex items-center gap-2 justify-center">
-                                                <Badge variant="destructive" className="text-[10px]">flagged</Badge>
-                                                <Button
-                                                  size="sm"
-                                                  className="h-6 px-2 text-xs bg-green-600 text-white hover:bg-green-700"
-                                                  onClick={() => resolveTransaction(txn.id)}
-                                                >
-                                                  <CheckCircle2 className="h-3 w-3 mr-1" />
-                                                  Resolve
-                                                </Button>
-                                              </div>
-                                            ) : (
-                                              <Badge variant="secondary" className="text-[10px]">{txn.status}</Badge>
-                                            )}
-                                          </td>
-                                        </tr>
-                                      ))}
-                                    </tbody>
-                                  </table>
-                                  <div className="text-xs text-[#6b6b9a] pt-3 mt-2 border-t border-[#1e1e3a]">
-                                    {deptTransactions.length} transactions | Total: {formatUSDT(deptTransactions.reduce((s, t) => s + t.amount, 0))}
-                                  </div>
-                                </>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                    </Fragment>
-                  );
-                })}
-              </tbody>
-            </table>
-            <p className="text-[11px] text-[#5a5a80] mt-4 text-center">Click any department row to view transactions</p>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Cards View */}
-      {viewMode === "cards" && (
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-          {activeBva.map((row) => {
-            const status =
-              row.utilization > 100 ? "Over Budget" : row.utilization > 90 ? "At Risk" : "On Track";
-            const isExpanded = expandedDept === row.departmentId;
-            const deptTransactions = isExpanded
-              ? getTransactionsForDepartmentMonth(allTransactions, row.departmentId, selectedMonth).sort((a, b) => b.amount - a.amount)
-              : [];
-            return (
-              <Card key={row.departmentId} className="overflow-hidden bg-[#0f0f22] border border-[#1e1e3a]">
-                <div className="h-1" style={{ background: row.color }} />
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm text-[#e8e8ff]">{row.departmentName}</CardTitle>
-                    <Badge
-                      variant={status === "Over Budget" ? "destructive" : status === "At Risk" ? "secondary" : "outline"}
-                      className="text-[10px]"
-                    >
-                      {status}
-                    </Badge>
-                  </div>
-                  <p className="text-[10px] text-[#6b6b9a]">
-                    Lead: {DEPARTMENT_MAP[row.departmentId]?.lead}
-                  </p>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-center justify-center">
-                    <div className="relative w-20 h-20">
-                      <svg viewBox="0 0 36 36" className="w-20 h-20 -rotate-90">
-                        <circle cx="18" cy="18" r="15.9" fill="none" stroke="#1e1e3a" strokeWidth="3" />
-                        <circle
-                          cx="18" cy="18" r="15.9" fill="none"
-                          stroke={row.utilization > 100 ? "#ef4444" : row.utilization > 90 ? "#f59e0b" : "#22c55e"}
-                          strokeWidth="3"
-                          strokeDasharray={`${Math.min(row.utilization, 100)} ${100 - Math.min(row.utilization, 100)}`}
-                          strokeLinecap="round"
-                        />
-                      </svg>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-sm font-bold text-[#e8e8ff]">{row.utilization.toFixed(0)}%</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div>
-                      <p className="text-[#6b6b9a]">Budget</p>
-                      <p className="font-mono font-medium text-[#e8e8ff]">{formatUSDT(row.allocated, true)}</p>
-                    </div>
-                    <div>
-                      <p className="text-[#6b6b9a]">Actual</p>
-                      <p
-                        className="font-mono font-medium cursor-pointer text-[#ACAAFF] hover:text-[#9997FF]"
-                        onClick={() => toggleExpand(row.departmentId)}
-                      >
-                        {formatUSDT(row.actual, true)}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Inline expanded transactions in card view */}
-                  {isExpanded && (
-                    <div className="bg-[#0a0a1a] border border-[#1e1e3a] rounded-md p-3 mt-2">
-                      {deptTransactions.length === 0 ? (
-                        <p className="text-xs text-[#6b6b9a]">No transactions found.</p>
-                      ) : (
-                        <>
-                          <div className="space-y-2 max-h-48 overflow-y-auto">
-                            {deptTransactions.map((txn) => (
-                              <div key={txn.id} className="flex items-center justify-between text-xs border-b border-[#1e1e3a] pb-1 last:border-0">
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-[#e8e8ff] truncate">{txn.applicant}</p>
-                                  <p className="text-[#6b6b9a] truncate text-[10px]">{txn.description}</p>
-                                </div>
-                                <div className="flex items-center gap-2 ml-2">
-                                  <span className="font-mono text-[#e8e8ff]">{formatUSDT(txn.amount)}</span>
-                                  {txn.flagged ? (
-                                    <Button
-                                      size="sm"
-                                      className="h-5 px-1.5 text-[10px] bg-green-600 text-white hover:bg-green-700"
-                                      onClick={() => resolveTransaction(txn.id)}
-                                    >
-                                      Resolve
-                                    </Button>
-                                  ) : (
-                                    <Badge variant="secondary" className="text-[8px]">{txn.status}</Badge>
-                                  )}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                          <div className="text-[10px] text-[#6b6b9a] pt-2 mt-1 border-t border-[#1e1e3a]">
-                            {deptTransactions.length} txns | {formatUSDT(deptTransactions.reduce((s, t) => s + t.amount, 0))}
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  )}
-
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1 text-xs border-[#1e1e3a] text-[#ACAAFF] hover:bg-[rgba(153,151,255,0.06)]"
-                      onClick={() => toggleExpand(row.departmentId)}
-                    >
-                      {isExpanded ? <ChevronDown className="h-3 w-3 mr-1" /> : <ChevronRight className="h-3 w-3 mr-1" />}
-                      {isExpanded ? "Collapse" : "Details"}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1 text-xs border-[#1e1e3a] text-[#ACAAFF] hover:bg-[rgba(153,151,255,0.06)]"
-                      onClick={() => openEditor(row.departmentId)}
-                    >
-                      <Pencil className="h-3 w-3 mr-1" /> Edit
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      )}
     </div>
   );
 }
